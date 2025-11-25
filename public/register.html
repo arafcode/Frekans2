@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frekans - Kayıt Ol</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Logo -->
+            <div class="auth-logo">
+                <svg width="60" height="60" viewBox="0 0 40 40" fill="none">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="8" y="15" width="3" height="10" rx="1.5" fill="url(#logoGradient)">
+                        <animate attributeName="height" values="10;20;10" dur="1s" repeatCount="indefinite"/>
+                        <animate attributeName="y" values="15;10;15" dur="1s" repeatCount="indefinite"/>
+                    </rect>
+                    <rect x="14" y="12" width="3" height="16" rx="1.5" fill="url(#logoGradient)">
+                        <animate attributeName="height" values="16;24;16" dur="1.2s" repeatCount="indefinite"/>
+                        <animate attributeName="y" values="12;8;12" dur="1.2s" repeatCount="indefinite"/>
+                    </rect>
+                    <rect x="20" y="8" width="3" height="24" rx="1.5" fill="url(#logoGradient)">
+                        <animate attributeName="height" values="24;28;24" dur="0.8s" repeatCount="indefinite"/>
+                        <animate attributeName="y" values="8;6;8" dur="0.8s" repeatCount="indefinite"/>
+                    </rect>
+                    <rect x="26" y="13" width="3" height="14" rx="1.5" fill="url(#logoGradient)">
+                        <animate attributeName="height" values="14;22;14" dur="1.1s" repeatCount="indefinite"/>
+                        <animate attributeName="y" values="13;9;13" dur="1.1s" repeatCount="indefinite"/>
+                    </rect>
+                </svg>
+                <h1>Frekans</h1>
+            </div>
+
+            <h2>Hesap Oluştur</h2>
+            <p class="auth-subtitle">Müzik keşfine başlamak için kayıt ol</p>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Kullanıcı Adı</label>
+                    <input type="text" id="username" name="username" placeholder="Kullanıcı adınızı seçin" required minlength="3">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" name="email" placeholder="E-posta adresiniz" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Şifre</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="password" name="password" placeholder="Şifre oluşturun" required minlength="6">
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Şifre Tekrar</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Şifrenizi tekrar girin" required minlength="6">
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-btn">
+                    <span>Kayıt Ol</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </form>
+
+            <p class="auth-footer">
+                Zaten hesabın var mı? <a href="login.html">Giriş yap</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="auth.js?v=4"></script>
+</body>
+</html>

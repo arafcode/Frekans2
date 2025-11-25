@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayarlar - Frekans</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="theme.js"></script>
+    <link rel="stylesheet" href="library.css">
+    <style>
+        .settings-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .settings-header {
+            margin-bottom: 40px;
+        }
+
+        .settings-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .settings-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .settings-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .settings-section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-info h3 {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .setting-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .setting-control {
+            margin-left: 20px;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary-color);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        /* Select Dropdown */
+        .setting-select {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Button */
+        .setting-button {
+            padding: 8px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .setting-button:hover {
+            opacity: 0.9;
+        }
+
+        .setting-button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .setting-button.danger {
+            background: #e53e3e;
+        }
+
+        /* Input Field */
+        .setting-input {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .setting-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Danger Zone */
+        .danger-zone {
+            border: 1px solid #e53e3e;
+            background: rgba(229, 62, 62, 0.05);
+        }
+
+        .danger-zone h2 {
+            color: #e53e3e;
+        }
+
+        /* Save Indicator */
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: var(--success-color, #48bb78);
+            color: white;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header / Navigation -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <!-- Logo -->
+                <a href="index.html" class="logo" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="15" width="3" height="10" rx="1.5" fill="url(#logoGradient)">
+                            <animate attributeName="height" values="10;20;10" dur="1s" repeatCount="indefinite"/>
+                            <animate attributeName="y" values="15;10;15" dur="1s" repeatCount="indefinite"/>
+                        </rect>
+                        <rect x="14" y="12" width="3" height="16" rx="1.5" fill="url(#logoGradient)">
+                            <animate attributeName="height" values="16;24;16" dur="1.2s" repeatCount="indefinite"/>
+                            <animate attributeName="y" values="12;8;12" dur="1.2s" repeatCount="indefinite"/>
+                        </rect>
+                        <rect x="20" y="8" width="3" height="24" rx="1.5" fill="url(#logoGradient)">
+                            <animate attributeName="height" values="24;28;24" dur="0.8s" repeatCount="indefinite"/>
+                            <animate attributeName="y" values="8;6;8" dur="0.8s" repeatCount="indefinite"/>
+                        </rect>
+                        <rect x="26" y="13" width="3" height="14" rx="1.5" fill="url(#logoGradient)">
+                            <animate attributeName="height" values="14;22;14" dur="1.1s" repeatCount="indefinite"/>
+                            <animate attributeName="y" values="13;9;13" dur="1.1s" repeatCount="indefinite"/>
+                        </rect>
+                    </svg>
+                    <span>Frekans</span>
+                </a>
+
+                <!-- Search Bar -->
+                <div class="search-bar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Şarkı, sanatçı veya albüm ara..." autocomplete="off">
+                    <div class="search-dropdown" id="searchDropdown" style="display: none;">
+                        <!-- Search results will appear here -->
+                    </div>
+                </div>
+
+                <!-- User Profile -->
+                <div class="user-profile">
+                    <a href="library.html" class="library-link" id="libraryBtn" data-i18n="nav.library">
+                        Kitaplığım
+                    </a>
+                    <a href="upload.html" class="upload-btn" id="uploadBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        <span data-i18n="nav.upload">Upload</span>
+                    </a>
+                    <div class="user-menu-wrapper">
+                        <div class="avatar" id="userAvatar">
+                            <img src="https://i.pravatar.cc/150?img=12" alt="User">
+                        </div>
+                        <div class="user-dropdown" id="userDropdown" style="display: none;">
+                            <div class="dropdown-header">
+                                <span id="userDisplayName">Misafir</span>
+                            </div>
+                            <button class="dropdown-item" id="profileBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span data-i18n="nav.profile">Profilim</span>
+                            </button>
+                            <a href="settings.html" class="dropdown-item" style="text-decoration: none;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                                </svg>
+                                <span data-i18n="nav.settings">Ayarlar</span>
+                            </a>
+                            <div class="dropdown-divider" style="height: 1px; background: var(--border-color); margin: 8px 0;"></div>
+                            <button class="dropdown-item" onclick="logout()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                <span data-i18n="nav.logout">Çıkış Yap</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="settings-container">
+        <div class="settings-header">
+            <h1 data-i18n="settings.title">Ayarlar</h1>
+            <p>Hesap ve uygulama ayarlarınızı yönetin</p>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="settings-section">
+            <h2 data-i18n="settings.account">Hesap Ayarları</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="account.email">E-posta Adresi</h3>
+                    <p data-i18n="account.emailDesc">Hesabınızla ilişkili e-posta adresiniz</p>
+                </div>
+                <div class="setting-control">
+                    <input type="email" class="setting-input" id="emailInput" placeholder="email@example.com">
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="account.username">Kullanıcı Adı</h3>
+                    <p data-i18n="account.usernameDesc">Profilinizde görünen kullanıcı adınız</p>
+                </div>
+                <div class="setting-control">
+                    <input type="text" class="setting-input" id="usernameInput" disabled>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="account.password">Şifre</h3>
+                    <p data-i18n="account.passwordDesc">Hesap şifrenizi değiştirin</p>
+                </div>
+                <div class="setting-control">
+                    <button class="setting-button secondary" onclick="changePassword()" data-i18n="account.changePassword">Şifre Değiştir</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="settings-section">
+            <h2 data-i18n="settings.privacy">Gizlilik Ayarları</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="privacy.profile">Profil Gizliliği</h3>
+                    <p data-i18n="privacy.profileDesc">Profilinizi herkese açık yapın veya gizleyin</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="profilePrivacyToggle" onclick="toggleSetting('profilePrivacy')"></div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="privacy.autoPublic">Şarkıları Otomatik Yayınla</h3>
+                    <p data-i18n="privacy.autoPublicDesc">Yüklediğiniz şarkılar otomatik olarak herkese açık olsun</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="autoPublicToggle" onclick="toggleSetting('autoPublic')"></div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="privacy.showLikes">Beğenileri Göster</h3>
+                    <p data-i18n="privacy.showLikesDesc">Beğendiğiniz şarkılar profilinizde görünsün</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="showLikesToggle" onclick="toggleSetting('showLikes')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="settings-section">
+            <h2 data-i18n="notifications.title">Bildirim Ayarları</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="notifications.email">E-posta Bildirimleri</h3>
+                    <p data-i18n="notifications.emailDesc">Yeni takipçi ve beğeniler için e-posta alın</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="emailNotifToggle" onclick="toggleSetting('emailNotif')"></div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="notifications.comment">Yorum Bildirimleri</h3>
+                    <p data-i18n="notifications.commentDesc">Şarkılarınıza yapılan yorumlar için bildirim alın</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="commentNotifToggle" onclick="toggleSetting('commentNotif')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playback Settings -->
+        <div class="settings-section">
+            <h2 data-i18n="audio.title">Oynatma Ayarları</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="audio.quality">Ses Kalitesi</h3>
+                    <p data-i18n="audio.qualityDesc">Müzik oynatma kalitesini seçin</p>
+                </div>
+                <div class="setting-control">
+                    <select class="setting-select" id="audioQuality" onchange="saveSetting('audioQuality')">
+                        <option value="low" data-i18n="audio.qualityLow">Düşük (128kbps)</option>
+                        <option value="normal" selected data-i18n="audio.qualityNormal">Normal (256kbps)</option>
+                        <option value="high" data-i18n="audio.qualityHigh">Yüksek (320kbps)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="audio.autoplay">Otomatik Oynat</h3>
+                    <p data-i18n="audio.autoplayDesc">Şarkı bitince benzer şarkıları otomatik oynat</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="autoplayToggle" onclick="toggleSetting('autoplay')"></div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="audio.crossfade">Crossfade</h3>
+                    <p data-i18n="audio.crossfadeDesc">Şarkılar arası geçişlerde yumuşak geçiş</p>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="crossfadeToggle" onclick="toggleSetting('crossfade')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div class="settings-section">
+            <h2 data-i18n="appearance.title">Görünüm</h2>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="language.select">Dil</h3>
+                    <p data-i18n="language.selectDesc">Uygulama dilini seçin</p>
+                </div>
+                <div class="setting-control">
+                    <select class="setting-select" id="languageSelect" onchange="saveSetting('language')">
+                        <option value="tr" selected>Türkçe</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="settings-section">
+            <h2 data-i18n="feedback.title">Geri Bildirim</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="feedback.send">Geri Bildirim Gönder</h3>
+                    <p data-i18n="feedback.sendDesc">Uygulama hakkında düşüncelerinizi bizimle paylaşın</p>
+                </div>
+                <div class="setting-control">
+                    <button class="setting-button" onclick="openFeedbackModal()" data-i18n="feedback.send">Geri Bildirim Gönder</button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="feedback.complaint">Şikayet Bildir</h3>
+                    <p data-i18n="feedback.complaintDesc">Karşılaştığınız sorunları bildirin</p>
+                </div>
+                <div class="setting-control">
+                    <button class="setting-button secondary" onclick="openComplaintModal()" data-i18n="feedback.complaint">Şikayet Bildir</button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="feedback.suggestion">Öneri Sunun</h3>
+                    <p data-i18n="feedback.suggestionDesc">Yeni özellik önerilerinizi gönderin</p>
+                </div>
+                <div class="setting-control">
+                    <button class="setting-button" onclick="openSuggestionModal()" data-i18n="feedback.suggestion">Öneri Gönder</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="settings-section">
+            <h2 data-i18n="about.title">Hakkında</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="about.version">Versiyon</h3>
+                    <p data-i18n="about.versionDesc">Mevcut uygulama sürümü</p>
+                </div>
+                <div class="setting-control">
+                    <span style="color: var(--text-muted); font-size: 14px;">v1.0.0</span>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="about.lastUpdate">Son Güncelleme</h3>
+                    <p data-i18n="about.lastUpdateDesc">En son güncelleme tarihi</p>
+                </div>
+                <div class="setting-control">
+                    <span style="color: var(--text-muted); font-size: 14px;">24 Kasım 2025</span>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="about.developer">Geliştirici</h3>
+                    <p data-i18n="about.developerDesc">Frekans Müzik Platformu</p>
+                </div>
+                <div class="setting-control">
+                    <span style="color: var(--text-muted); font-size: 14px;">© 2025 Frekans</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="settings-section danger-zone">
+            <h2 data-i18n="danger.title">Tehlikeli Bölge</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="danger.deactivate">Hesabı Devre Dışı Bırak</h3>
+                    <p data-i18n="danger.deactivateDesc">Hesabınızı geçici olarak devre dışı bırakın</p>
+                </div>
+                <div class="setting-control">
+                    <button class="setting-button secondary" onclick="deactivateAccount()" data-i18n="danger.deactivate">Devre Dışı Bırak</button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3 data-i18n="danger.delete">Hesabı Sil</h3>
+                    <p data-i18n="danger.deleteDesc">Hesabınızı ve tüm verilerinizi kalıcı olarak silin</p>
+                </div>
+                <div class="setting-control">
+                    <button class="setting-button danger" onclick="deleteAccount()" data-i18n="danger.delete">Hesabı Sil</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sticky Player (Bottom Bar) -->
+    <div class="sticky-player" id="stickyPlayer" style="display: none;">
+        <div class="player-main-row">
+            <div class="player-track-info">
+                <div class="player-cover" id="playerCoverWrapper" style="cursor: pointer;">
+                    <img id="playerCover" src="" alt="Track Cover">
+                </div>
+                <div class="player-details">
+                    <div class="player-title" id="playerTitle" style="cursor: pointer;">Track Title</div>
+                    <div class="player-artist" id="playerArtist" style="cursor: pointer;">Artist Name</div>
+                </div>
+                <button class="player-like-btn" id="playerLikeBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="player-controls">
+                <button class="control-btn" id="prevBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    </svg>
+                </button>
+                <button class="control-btn play-btn" id="playBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="nextBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="player-volume">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                </svg>
+                <input type="range" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+        </div>
+
+        <div class="player-progress">
+            <span class="time" id="currentTime">0:00</span>
+            <div class="progress-bar">
+                <input type="range" id="progressSlider" min="0" max="100" value="0">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="time" id="totalTime">0:00</span>
+        </div>
+    </div>
+
+    <!-- Save Indicator -->
+    <div class="save-indicator" id="saveIndicator">
+        ✓ Ayarlar kaydedildi
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <script src="translations.js"></script>
+    <script src="toast.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>

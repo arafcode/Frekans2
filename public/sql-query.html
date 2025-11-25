@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Tool - Frekans</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: var(--background-color);
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sql-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .sql-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .sql-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .query-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .query-section h2 {
+            margin: 0 0 16px 0;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .query-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: #1e1e1e;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: #d4d4d4;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .query-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-execute {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-execute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-execute:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-clear {
+            padding: 12px 24px;
+            background: var(--background-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-clear:hover {
+            background: var(--hover-bg);
+        }
+
+        .results-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            min-height: 300px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .results-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .results-info {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .results-table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .results-table th {
+            background: var(--background-color);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .results-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .results-table tr:hover {
+            background: var(--background-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .query-examples {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .query-examples h3 {
+            margin: 0 0 16px 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .example-query {
+            background: #1e1e1e;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .example-query:hover {
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .example-query h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .example-query code {
+            display: block;
+            color: #d4d4d4;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="sql-container">
+        <!-- Header -->
+        <div class="sql-header">
+            <h1>🗄️ SQL Query Tool</h1>
+            <a href="login.html" class="back-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Geri
+            </a>
+        </div>
+
+        <!-- Query Examples -->
+        <div class="query-examples">
+            <h3>📚 Örnek Sorgular (Tıklayarak Kullan)</h3>
+            
+            <div class="example-query" onclick="useExample(this)">
+                <h4>Tüm Kullanıcıları Listele (SELECT)</h4>
+                <code>SELECT UserID, Username, Email, Bio FROM [Identity].[Users];</code>
+            </div>
+
+            <div class="example-query" onclick="useExample(this)">
+                <h4>Tüm Şarkıları Listele (SELECT with JOIN)</h4>
+                <code>SELECT t.TrackID, t.Title, u.Username AS Artist, t.DurationSeconds, t.UploadDate<br>FROM [Music].[Tracks] t<br>INNER JOIN [Identity].[Users] u ON t.ArtistID = u.UserID;</code>
+            </div>
+
+            <div class="example-query" onclick="useExample(this)">
+                <h4>Çalma Listelerini Listele</h4>
+                <code>SELECT p.PlaylistID, p.Name, u.Username AS Owner, p.IsPublic, p.CreatedDate<br>FROM [Music].[Playlists] p<br>INNER JOIN [Identity].[Users] u ON p.UserID = u.UserID;</code>
+            </div>
+
+            <div class="example-query" onclick="useExample(this)">
+                <h4>Yeni Kullanıcı Ekle (INSERT)</h4>
+                <code>INSERT INTO [Identity].[Users] (Username, Email, PasswordHash, Bio)<br>VALUES ('testuser', 'test@example.com', 'hash123', 'Test kullanıcı');</code>
+            </div>
+
+            <div class="example-query" onclick="useExample(this)">
+                <h4>Kullanıcı Bilgilerini Güncelle (UPDATE)</h4>
+                <code>UPDATE [Identity].[Users]<br>SET Bio = 'Yeni biyografi metni'<br>WHERE Username = 'testuser';</code>
+            </div>
+
+            <div class="example-query" onclick="useExample(this)">
+                <h4>Kullanıcı Sil (DELETE)</h4>
+                <code>DELETE FROM [Identity].[Users]<br>WHERE Username = 'testuser';</code>
+            </div>
+
+            <div class="example-query" onclick="useExample(this)">
+                <h4>En Popüler Şarkılar (Aggregate)</h4>
+                <code>SELECT TOP 10 t.Title, u.Username, COUNT(p.PlayID) AS PlayCount<br>FROM [Music].[Tracks] t<br>INNER JOIN [Identity].[Users] u ON t.ArtistID = u.UserID<br>LEFT JOIN [Interaction].[Plays] p ON t.TrackID = p.TrackID<br>GROUP BY t.Title, u.Username<br>ORDER BY PlayCount DESC;</code>
+            </div>
+        </div>
+
+        <!-- Query Input -->
+        <div class="query-section">
+            <h2>SQL Sorgusu Yaz</h2>
+            <textarea 
+                id="queryInput" 
+                class="query-input" 
+                placeholder="SQL sorgunuzu buraya yazın...&#10;&#10;Örnek:&#10;SELECT * FROM [Identity].[Users];"></textarea>
+            
+            <div class="query-actions">
+                <button class="btn-execute" onclick="executeQuery()" id="executeBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Sorguyu Çalıştır
+                </button>
+                <button class="btn-clear" onclick="clearQuery()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Temizle
+                </button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-section">
+            <div class="results-header">
+                <h2>Sonuçlar</h2>
+                <span class="results-info" id="resultsInfo"></span>
+            </div>
+            
+            <div id="resultsContainer">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <p>Sorgu sonuçları burada görünecek</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api';
+
+        function useExample(element) {
+            const code = element.querySelector('code').innerText;
+            document.getElementById('queryInput').value = code;
+        }
+
+        function clearQuery() {
+            document.getElementById('queryInput').value = '';
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <p>Sorgu sonuçları burada görünecek</p>
+                </div>
+            `;
+            document.getElementById('resultsInfo').textContent = '';
+        }
+
+        async function executeQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            
+            if (!query) {
+                alert('Lütfen bir SQL sorgusu girin');
+                return;
+            }
+
+            const executeBtn = document.getElementById('executeBtn');
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg> Çalıştırılıyor...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/sql-query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Sorgu hatası');
+                }
+
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Query error:', error);
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="error-message">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <div>
+                            <strong>Hata:</strong> ${error.message}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('resultsInfo').textContent = '';
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Sorguyu Çalıştır';
+            }
+        }
+
+        function displayResults(data) {
+            const container = document.getElementById('resultsContainer');
+            const resultsInfo = document.getElementById('resultsInfo');
+
+            if (data.message) {
+                // For INSERT, UPDATE, DELETE operations
+                container.innerHTML = `
+                    <div class="success-message">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <div>
+                            <strong>Başarılı:</strong> ${data.message}
+                            ${data.rowsAffected ? `<br><small>${data.rowsAffected} satır etkilendi</small>` : ''}
+                        </div>
+                    </div>
+                `;
+                resultsInfo.textContent = '';
+                return;
+            }
+
+            if (!data.results || data.results.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <p>Sonuç bulunamadı</p>
+                    </div>
+                `;
+                resultsInfo.textContent = '0 sonuç';
+                return;
+            }
+
+            resultsInfo.textContent = `${data.results.length} sonuç`;
+
+            const columns = Object.keys(data.results[0]);
+            
+            let html = '<div class="results-table-wrapper"><table class="results-table"><thead><tr>';
+            columns.forEach(col => {
+                html += `<th>${col}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            data.results.forEach(row => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    let value = row[col];
+                    if (value === null) {
+                        value = '<em style="color: var(--text-muted);">NULL</em>';
+                    } else if (typeof value === 'object') {
+                        value = JSON.stringify(value);
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        // Allow Ctrl+Enter to execute
+        document.getElementById('queryInput').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                executeQuery();
+            }
+        });
+    </script>
+</body>
+</html>

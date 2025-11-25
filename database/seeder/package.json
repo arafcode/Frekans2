@@ -1,0 +1,27 @@
+{
+  "name": "soundcloud-clone-seeder",
+  "version": "1.0.0",
+  "description": "Big Data seeder for SoundCloud Clone database - 50K+ records",
+  "main": "db-seed.js",
+  "scripts": {
+    "seed": "node db-seed.js",
+    "seed:fast": "node --max-old-space-size=4096 db-seed.js"
+  },
+  "keywords": [
+    "mssql",
+    "seeder",
+    "faker",
+    "bulk-insert",
+    "big-data"
+  ],
+  "author": "Database Team",
+  "license": "MIT",
+  "dependencies": {
+    "mssql": "^10.0.2",
+    "@faker-js/faker": "^8.3.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
