@@ -1,20 +1,21 @@
 {
-  "name": "soundcloud-clone-api",
+  "name": "frekans",
   "version": "1.0.0",
-  "description": "SoundCloud Clone REST API - Node.js Express Backend",
+  "description": "FREKANS - Music Streaming Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "keywords": [
-    "soundcloud",
+    "frekans",
+    "music",
+    "streaming",
     "express",
     "mssql",
-    "rest-api",
-    "music-streaming"
+    "rest-api"
   ],
-  "author": "Backend Team",
+  "author": "Erdem",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",

@@ -80,6 +80,9 @@ AS
 BEGIN
     SET NOCOUNT ON;
     
+    DECLARE @IsFollowing BIT;
+    DECLARE @IsFriend BIT;
+    
     -- Validation
     IF @FollowerID = @FollowingID
     BEGIN
@@ -95,7 +98,10 @@ BEGIN
         DELETE FROM [Interaction].[Follows]
         WHERE FollowerID = @FollowerID AND FollowingID = @FollowingID;
         
-        SELECT 'unfollowed' AS Action, 0 AS IsFollowing;
+        SET @IsFollowing = 0;
+        SET @IsFriend = 0;
+        
+        SELECT 'unfollowed' AS Action, @IsFollowing AS IsFollowing, @IsFriend AS IsFriend;
     END
     ELSE
     BEGIN
@@ -103,7 +109,18 @@ BEGIN
         INSERT INTO [Interaction].[Follows] (FollowerID, FollowingID, FollowDate)
         VALUES (@FollowerID, @FollowingID, GETDATE());
         
-        SELECT 'followed' AS Action, 1 AS IsFollowing;
+        SET @IsFollowing = 1;
+        
+        -- Check if they follow back (mutual follow = friends)
+        SET @IsFriend = CASE 
+            WHEN EXISTS (
+                SELECT 1 FROM [Interaction].[Follows] 
+                WHERE FollowerID = @FollowingID AND FollowingID = @FollowerID
+            ) THEN 1
+            ELSE 0
+        END;
+        
+        SELECT 'followed' AS Action, @IsFollowing AS IsFollowing, @IsFriend AS IsFriend;
     END
 END
 GO
@@ -223,7 +240,8 @@ GO
 CREATE PROCEDURE [Interaction].[sp_SendMessage]
     @SenderID INT,
     @ReceiverID INT,
-    @MessageText NVARCHAR(1000)
+    @MessageText NVARCHAR(1000),
+    @Metadata NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -250,8 +268,8 @@ BEGIN
     END
     
     -- Insert message
-    INSERT INTO [Interaction].[Messages] (SenderID, ReceiverID, MessageText, SentDate, IsRead)
-    VALUES (@SenderID, @ReceiverID, @MessageText, GETDATE(), 0);
+    INSERT INTO [Interaction].[Messages] (SenderID, ReceiverID, MessageText, SentDate, IsRead, Metadata)
+    VALUES (@SenderID, @ReceiverID, @MessageText, GETDATE(), 0, @Metadata);
     
     SELECT 
         SCOPE_IDENTITY() AS MessageID,
@@ -259,7 +277,8 @@ BEGIN
         @ReceiverID AS ReceiverID,
         @MessageText AS MessageText,
         GETDATE() AS SentDate,
-        0 AS IsRead;
+        0 AS IsRead,
+        @Metadata AS Metadata;
 END
 GO
 
@@ -288,6 +307,7 @@ BEGIN
         m.MessageText,
         m.SentDate,
         m.IsRead,
+        m.Metadata,
         sender.Username AS SenderUsername,
         sender.AvatarUrl AS SenderAvatar
     FROM [Interaction].[Messages] m

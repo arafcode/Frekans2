@@ -1014,15 +1014,15 @@ body {
 }
 
 .play-btn.playing svg:first-child {
-    opacity: 0;
+    opacity: 0 !important;
 }
 
 .play-btn.playing svg:last-child {
-    opacity: 1;
+    opacity: 1 !important;
 }
 
 .play-btn:not(.playing) svg:last-child {
-    opacity: 0;
+    opacity: 0 !important;
 }
 
 .player-progress {

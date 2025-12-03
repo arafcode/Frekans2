@@ -1123,3 +1123,49 @@
         transform: translateY(0);
     }
 }
+
+/* Track Share Card in Messages */
+.track-share-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.track-share-card:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.track-share-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.track-share-info {
+    flex: 1;
+}
+
+.track-share-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.track-share-artist {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.track-share-card svg {
+    color: var(--primary-color);
+}

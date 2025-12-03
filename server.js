@@ -964,25 +964,26 @@ app.get('/api/users/:id', async (req, res) => {
         const request = pool.request();
         request.input('UserID', sql.Int, userId);
 
-        const query = `
-            SELECT 
-                u.UserID,
-                u.Username,
-                u.Email,
-                u.Bio,
-                u.AvatarUrl,
-                u.HeaderImageUrl,
-                u.IsVerified,
-                u.CreatedAt,
-                (SELECT COUNT(*) FROM [Music].[Tracks] WHERE ArtistID = u.UserID AND IsPublic = 1) AS TrackCount,
-                (SELECT COUNT(*) FROM [Interaction].[Follows] WHERE FollowingID = u.UserID) AS FollowerCount,
-                (SELECT COUNT(*) FROM [Interaction].[Follows] WHERE FollowerID = u.UserID) AS FollowingCount,
-                (SELECT SUM(PlayCount) FROM [Music].[Tracks] WHERE ArtistID = u.UserID) AS TotalPlays
-            FROM [Identity].[Users] u
-            WHERE u.UserID = @UserID;
-        `;
-
-        const result = await request.query(query);
+        // Use stored procedure to get LastActiveAt
+        const result = await request.execute('[Identity].[sp_GetUserByID]');
+        
+        // Add additional stats
+        if (result.recordset.length > 0) {
+            const statsRequest = pool.request();
+            statsRequest.input('UserID', sql.Int, userId);
+            
+            const statsQuery = `
+                SELECT 
+                    (SELECT COUNT(*) FROM [Music].[Tracks] WHERE ArtistID = @UserID AND IsPublic = 1) AS TrackCount,
+                    (SELECT SUM(PlayCount) FROM [Music].[Tracks] WHERE ArtistID = @UserID) AS TotalPlays
+            `;
+            
+            const statsResult = await statsRequest.query(statsQuery);
+            
+            // Merge stats into user object
+            result.recordset[0].TrackCount = statsResult.recordset[0].TrackCount;
+            result.recordset[0].TotalPlays = statsResult.recordset[0].TotalPlays;
+        }
 
         if (result.recordset.length === 0) {
             return res.status(404).json({
@@ -998,6 +999,30 @@ app.get('/api/users/:id', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Kullanıcı profili alınamadı.',
+            error: error.message
+        });
+    }
+});
+
+// =============================================
+// ENDPOINT: POST /api/users/:id/activity
+// Update user last active time
+// =============================================
+app.post('/api/users/:id/activity', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        
+        const request = pool.request();
+        request.input('UserID', sql.Int, userId);
+        
+        await request.execute('[Identity].[sp_UpdateUserActivity]');
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ /api/users/:id/activity error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update activity',
             error: error.message
         });
     }
@@ -1783,6 +1808,8 @@ app.post('/api/follow', async (req, res) => {
     try {
         const { followerID, followingID } = req.body;
 
+        console.log('🔄 Follow request:', { followerID, followingID });
+
         if (!followerID || !followingID) {
             return res.status(400).json({
                 success: false,
@@ -1795,6 +1822,8 @@ app.post('/api/follow', async (req, res) => {
         request.input('FollowingID', sql.Int, followingID);
 
         const result = await request.execute('[Interaction].[sp_ToggleFollow]');
+
+        console.log('✅ Follow result:', result.recordset[0]);
 
         res.json({
             success: true,
@@ -1816,11 +1845,15 @@ app.get('/api/users/:userId/followers', async (req, res) => {
         const userId = parseInt(req.params.userId);
         const currentUserID = req.query.currentUserID ? parseInt(req.query.currentUserID) : null;
 
+        console.log('👥 Get followers request:', { userId, currentUserID });
+
         const request = pool.request();
         request.input('UserID', sql.Int, userId);
         request.input('CurrentUserID', sql.Int, currentUserID);
 
         const result = await request.execute('[Interaction].[sp_GetFollowers]');
+
+        console.log('📊 Followers result (first 2):', result.recordset.slice(0, 2));
 
         res.json({
             success: true,
@@ -1842,11 +1875,15 @@ app.get('/api/users/:userId/following', async (req, res) => {
         const userId = parseInt(req.params.userId);
         const currentUserID = req.query.currentUserID ? parseInt(req.query.currentUserID) : null;
 
+        console.log('👤 Get following request:', { userId, currentUserID });
+
         const request = pool.request();
         request.input('UserID', sql.Int, userId);
         request.input('CurrentUserID', sql.Int, currentUserID);
 
         const result = await request.execute('[Interaction].[sp_GetFollowing]');
+
+        console.log('📊 Following result (first 2):', result.recordset.slice(0, 2));
 
         res.json({
             success: true,
@@ -1865,7 +1902,7 @@ app.get('/api/users/:userId/following', async (req, res) => {
 // Send Message
 app.post('/api/messages', async (req, res) => {
     try {
-        const { senderID, receiverID, messageText } = req.body;
+        const { senderID, receiverID, messageText, metadata } = req.body;
 
         if (!senderID || !receiverID || !messageText) {
             return res.status(400).json({
@@ -1878,6 +1915,7 @@ app.post('/api/messages', async (req, res) => {
         request.input('SenderID', sql.Int, senderID);
         request.input('ReceiverID', sql.Int, receiverID);
         request.input('MessageText', sql.NVarChar, messageText);
+        request.input('Metadata', sql.NVarChar, metadata || null);
 
         const result = await request.execute('[Interaction].[sp_SendMessage]');
 

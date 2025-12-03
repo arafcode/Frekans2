@@ -1,5 +1,5 @@
 -- =============================================
--- SoundCloud Clone - Database Creation Script
+-- Frekans - Database Creation Script
 -- =============================================
 -- Veritabanı: FrekansDB
 -- Tarih: 2025-11-21

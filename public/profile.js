@@ -8,8 +8,44 @@ let currentTab = 'tracks';
 let audioPlayer = null;
 let currentChatUserId = null;
 
+// Helper function to calculate "last seen" text
+function getLastSeenText(lastActiveAt) {
+    if (!lastActiveAt) return 'Son görülme bilinmiyor';
+    
+    const now = new Date();
+    const lastActive = new Date(lastActiveAt);
+    const diffMs = now - lastActive;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    // Online if active within last 2 minutes
+    if (diffMins < 2) return 'Çevrimiçi';
+    if (diffMins < 60) return `${diffMins} dk önce çevrimiçiydi`;
+    if (diffHours < 24) return `${diffHours} saat önce çevrimiçiydi`;
+    if (diffDays === 1) return 'Dün çevrimiçiydi';
+    if (diffDays < 7) return `${diffDays} gün önce çevrimiçiydi`;
+    return 'Uzun süredir çevrimdışı';
+}
+
+// Update own activity on page load and periodically
+function updateMyActivity() {
+    const myUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 
+                     localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    if (myUserId) {
+        fetch(`${API_BASE_URL}/users/${myUserId}/activity`, { method: 'POST' })
+            .catch(err => console.error('Activity update failed:', err));
+    }
+}
+
+// Update activity every 60 seconds
+setInterval(updateMyActivity, 60000);
+
 // Check authentication and load profile
 window.addEventListener('DOMContentLoaded', () => {
+    // Update user activity on page load
+    updateMyActivity();
+    
     // Initialize audio player
     audioPlayer = document.getElementById('audioPlayer');
     if (audioPlayer) {
@@ -257,18 +293,18 @@ async function displayProfile(user) {
             const newBtn = followBtn.cloneNode(true);
             followBtn.parentNode.replaceChild(newBtn, followBtn);
             
-            // Check follow status first to set correct text/style on the NEW button
+            // Then add click event to the NEW button
+            const currentBtn = document.getElementById('followBtn');
+            if (currentBtn) {
+                currentBtn.addEventListener('click', handleProfileFollow);
+            }
+            
+            // Check follow status AFTER setting up the event listener
             const isFriend = await checkFollowStatus(user.UserID, sessionUserId);
             
             // Show message button only if friends
             if (messageBtn) {
                 messageBtn.style.display = isFriend ? 'inline-flex' : 'none';
-            }
-            
-            // Then add click event to the NEW button
-            const currentBtn = document.getElementById('followBtn');
-            if (currentBtn) {
-                currentBtn.addEventListener('click', handleProfileFollow);
             }
         }
     }
@@ -286,7 +322,7 @@ async function checkFollowStatus(targetUserId, currentUserId) {
         const response = await fetch(`http://localhost:3000/api/users/${currentUserId}/following?currentUserID=${currentUserId}`);
         if (!response.ok) {
             console.log('❌ Follow status check failed:', response.status);
-            return;
+            return false;
         }
         
         const result = await response.json();
@@ -295,11 +331,11 @@ async function checkFollowStatus(targetUserId, currentUserId) {
         const followedUser = following.find(u => u.UserID == targetUserId);
         console.log('👤 Found followed user:', followedUser);
         
-        // Get the button AFTER it's been cloned
-        const followBtn = document.querySelector('.follow-btn');
+        // Get the button using ID (after it's been cloned and replaced)
+        const followBtn = document.getElementById('followBtn');
         if (!followBtn) {
             console.log('❌ Follow button not found!');
-            return;
+            return false;
         }
         
         if (followedUser) {
@@ -965,14 +1001,22 @@ window.addEventListener('beforeunload', () => {
 // ========== SOCIAL FEATURES ==========
 
 // Load followers list
+// Load followers list
 async function loadFollowers(userId) {
-    const currentUserId = localStorage.getItem('userID');
+    let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    if (!currentUserId) {
+        currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    }
+    
+    console.log('📥 Loading followers for:', { userId, currentUserId });
+    
     try {
         const response = await fetch(`http://localhost:3000/api/users/${userId}/followers?currentUserID=${currentUserId}`);
         if (!response.ok) throw new Error('Failed to load followers');
         
         const result = await response.json();
         console.log('👥 Followers API response:', result);
+        console.log('👤 First follower:', result.data?.[0]);
         const followers = result.data || result;
         renderUserList(followers, 'followersTab');
     } catch (error) {
@@ -984,12 +1028,20 @@ async function loadFollowers(userId) {
 
 // Load following list
 async function loadFollowing(userId) {
-    const currentUserId = localStorage.getItem('userID');
+    let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    if (!currentUserId) {
+        currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    }
+    
+    console.log('📥 Loading following for:', { userId, currentUserId });
+    
     try {
         const response = await fetch(`http://localhost:3000/api/users/${userId}/following?currentUserID=${currentUserId}`);
         if (!response.ok) throw new Error('Failed to load following');
         
         const result = await response.json();
+        console.log('👥 Following API response:', result);
+        console.log('👤 First following:', result.data?.[0]);
         const following = result.data || result;
         renderUserList(following, 'followingTab');
     } catch (error) {
@@ -1002,19 +1054,41 @@ async function loadFollowing(userId) {
 // Render user list
 function renderUserList(users, tabId) {
     const container = document.querySelector(`#${tabId} .users-grid`);
-    const currentUserId = parseInt(localStorage.getItem('userID'));
+    let currentUserId = parseInt(localStorage.getItem('userID') || sessionStorage.getItem('userID'));
     
-    console.log('📋 Rendering user list:', { tabId, userCount: users?.length, firstUser: users?.[0] });
+    if (!currentUserId) {
+        const userIdStr = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        if (userIdStr) currentUserId = parseInt(userIdStr);
+    }
+    
+    console.log('📋 Rendering user list:', { 
+        tabId, 
+        userCount: users?.length, 
+        currentUserId,
+        firstUser: users?.[0] 
+    });
     
     if (!users || users.length === 0) {
         container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Henüz kimse yok</p>';
         return;
     }
     
-    container.innerHTML = users.map(user => {
+    container.innerHTML = users.map((user, index) => {
+        if (index === 0) {
+            console.log('🔍 First user details:', {
+                UserID: user.UserID,
+                Username: user.Username,
+                IsFollowedByCurrentUser: user.IsFollowedByCurrentUser,
+                IsFriend: user.IsFriend
+            });
+        }
+        
         const avatarUrl = (user.AvatarUrl && !user.AvatarUrl.startsWith('/avatars/')) 
             ? user.AvatarUrl 
             : `https://i.pravatar.cc/150?u=${user.Username}`;
+        
+        const buttonClass = user.IsFollowedByCurrentUser ? (user.IsFriend ? 'friend' : 'following') : 'primary';
+        const buttonText = user.IsFollowedByCurrentUser ? (user.IsFriend ? 'Arkadaş' : 'Takiptesin') : 'Takip Et';
         
         return `
         <div class="user-card" data-user-id="${user.UserID}" onclick="goToUserProfile(${user.UserID})" style="cursor: pointer;">
@@ -1034,9 +1108,9 @@ function renderUserList(users, tabId) {
             </div>
             ${user.UserID !== currentUserId ? `
                 <div class="user-card-actions" onclick="event.stopPropagation()">
-                    <button class="user-card-btn ${user.IsFollowedByCurrentUser ? (user.IsFriend ? 'friend' : 'following') : 'primary'}" 
+                    <button class="user-card-btn ${buttonClass}" 
                             onclick="handleUserFollow(${user.UserID}, this); event.stopPropagation();">
-                        ${user.IsFollowedByCurrentUser ? (user.IsFriend ? 'Arkadaş' : 'Takiptesin') : 'Takip Et'}
+                        ${buttonText}
                     </button>
                     ${user.IsFriend ? `
                         <button class="user-card-btn secondary" onclick="openChat(${user.UserID}, '${user.Username}'); event.stopPropagation();">
@@ -1057,24 +1131,63 @@ function goToUserProfile(userId) {
 
 // Handle follow/unfollow
 async function handleUserFollow(targetUserId, buttonElement) {
-    const currentUserId = localStorage.getItem('userID');
+    // Try multiple sources for currentUserId
+    let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    
+    if (!currentUserId) {
+        // Try lowercase version
+        currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        if (currentUserId) {
+            localStorage.setItem('userID', currentUserId);
+            sessionStorage.setItem('userID', currentUserId);
+        }
+    }
+    
+    if (!currentUserId) {
+        // Try from user object
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                currentUserId = user.userId || user.UserID;
+                if (currentUserId) {
+                    localStorage.setItem('userID', currentUserId);
+                    sessionStorage.setItem('userID', currentUserId);
+                }
+            } catch (e) {}
+        }
+    }
+    
+    console.log('🎯 handleUserFollow called:', { currentUserId, targetUserId });
+    
+    if (!currentUserId) {
+        console.error('No current user ID found!');
+        alert('Oturum bilgisi bulunamadı. Lütfen çıkış yapıp tekrar giriş yapın.');
+        return;
+    }
     
     try {
+        const requestBody = {
+            followerID: parseInt(currentUserId),
+            followingID: parseInt(targetUserId)
+        };
+        
+        console.log('📤 Sending request:', requestBody);
+        
         const response = await fetch('http://localhost:3000/api/follow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                followerID: parseInt(currentUserId),
-                followingID: targetUserId
-            })
+            body: JSON.stringify(requestBody)
         });
         
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('❌ API Error:', errorData);
             throw new Error(errorData.message || 'Follow action failed');
         }
         
         const result = await response.json();
+        console.log('📊 Follow response:', result);
         const data = result.data || result;
         
         // Update button state
@@ -1082,8 +1195,12 @@ async function handleUserFollow(targetUserId, buttonElement) {
         const isFriend = data.IsFriend;
         const isFollowing = data.IsFollowing;
         
+        console.log('✨ Updating button:', { isFollowing, isFriend });
+        
         buttonElement.className = `user-card-btn ${isFollowing ? (isFriend ? 'friend' : 'following') : 'primary'}`;
         buttonElement.textContent = isFollowing ? (isFriend ? 'Arkadaş' : 'Takiptesin') : 'Takip Et';
+        
+        console.log('✅ Button text updated to:', buttonElement.textContent);
         
         // Update friend badge
         const username = card.querySelector('.user-card-username');
@@ -1120,7 +1237,7 @@ async function handleUserFollow(targetUserId, buttonElement) {
 
 // Handle profile follow button
 async function handleProfileFollow() {
-    const followBtn = document.querySelector('.follow-btn');
+    const followBtn = document.getElementById('followBtn');
     const profileUserId = new URLSearchParams(window.location.search).get('id');
     
     // Try multiple sources for currentUserId
@@ -1196,10 +1313,14 @@ async function handleProfileFollow() {
         const isFollowing = data.IsFollowing;
         const isFriend = data.IsFriend;
         
+        console.log('📊 Follow result:', { isFollowing, isFriend });
+        
         followBtn.className = `follow-btn ${isFollowing ? (isFriend ? 'friend' : 'following') : ''}`;
         
         const btnText = followBtn.querySelector('span');
         btnText.textContent = isFollowing ? (isFriend ? 'Arkadaşlar' : 'Takiptesin') : 'Takip Et';
+        
+        console.log('✅ Button updated to:', btnText.textContent);
         
         // Show/hide message button based on friend status
         const messageBtn = document.getElementById('messageBtn');
@@ -1227,28 +1348,45 @@ async function openChat(userId, username) {
     currentChatUserId = userId;
     
     // Get current user
-    const currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    if (!currentUserId) {
+        currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    }
     
     if (!currentUserId) {
         showToast('Mesaj göndermek için giriş yapmalısınız', 'error');
         return;
     }
     
-    // Load user info
+    // Load user info and status
     try {
         const response = await fetch(`${API_BASE_URL}/users/${userId}`);
         if (response.ok) {
             const user = await response.json();
             document.getElementById('chatUsername').textContent = user.Username;
-            document.getElementById('chatUserAvatar').src = `https://i.pravatar.cc/150?u=${user.Username}`;
+            document.getElementById('chatUserAvatar').src = user.AvatarUrl || `https://i.pravatar.cc/150?u=${user.Username}`;
+            
+            // Update user status
+            const statusText = getLastSeenText(user.LastActiveAt);
+            const statusElement = document.getElementById('chatUserStatus');
+            statusElement.textContent = statusText;
+            
+            // Color based on online status
+            if (statusText === 'Çevrimiçi') {
+                statusElement.style.color = '#22c55e'; // Green
+            } else {
+                statusElement.style.color = 'var(--text-muted)';
+            }
         } else {
             document.getElementById('chatUsername').textContent = username;
             document.getElementById('chatUserAvatar').src = `https://i.pravatar.cc/150?u=${username}`;
+            document.getElementById('chatUserStatus').textContent = 'Son görülme bilinmiyor';
         }
     } catch (error) {
         console.error('Error loading user info:', error);
         document.getElementById('chatUsername').textContent = username;
         document.getElementById('chatUserAvatar').src = `https://i.pravatar.cc/150?u=${username}`;
+        document.getElementById('chatUserStatus').textContent = 'Son görülme bilinmiyor';
     }
     
     // Load messages
@@ -1266,7 +1404,10 @@ function closeChatModal() {
 
 // Load chat messages
 async function loadChatMessages() {
-    const currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    if (!currentUserId) {
+        currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    }
     const messagesContainer = document.getElementById('chatMessages');
     
     if (!currentChatUserId || !currentUserId) return;
@@ -1299,11 +1440,52 @@ async function loadChatMessages() {
             const messageDate = new Date(msg.SentDate || msg.SentAt);
             const time = formatMessageTime(messageDate);
             
+            // Use sender's avatar from database
+            const avatarUrl = msg.SenderAvatar || `https://i.pravatar.cc/150?u=${msg.SenderUsername || msg.SenderID}`;
+            
+            // Check if message has track metadata
+            let trackCard = '';
+            if (msg.Metadata) {
+                try {
+                    const metadata = JSON.parse(msg.Metadata);
+                    if (metadata.type === 'track_share') {
+                        // Fix cover image URL - remove any localhost prefix and add correct one
+                        let coverUrl = metadata.coverImage || '';
+                        if (coverUrl) {
+                            // Remove existing localhost if present
+                            coverUrl = coverUrl.replace(/^https?:\/\/localhost:\d+/, '');
+                            // Add correct localhost
+                            coverUrl = coverUrl.startsWith('http') ? coverUrl : `http://localhost:3000${coverUrl}`;
+                        } else {
+                            coverUrl = `https://picsum.photos/seed/${metadata.trackId}/60/60`;
+                        }
+                        
+                        trackCard = `
+                            <div class="track-share-card" onclick="window.location.href='track-detail.html?id=${metadata.trackId}'">
+                                <img src="${coverUrl}" alt="${metadata.title}" onerror="this.src='https://picsum.photos/seed/${metadata.trackId}/60/60'">
+                                <div class="track-share-info">
+                                    <div class="track-share-title">${escapeHtml(metadata.title)}</div>
+                                    <div class="track-share-artist">${escapeHtml(metadata.artist)}</div>
+                                </div>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    console.error('Error parsing metadata:', e);
+                }
+            }
+            
+            const hasTextMessage = msg.MessageText && msg.MessageText.trim() && msg.MessageText.trim() !== ' ';
+            
             return `
                 <div class="chat-message ${isSent ? 'sent' : 'received'}">
-                    <img class="chat-message-avatar" src="https://i.pravatar.cc/150?u=${isSent ? 'me' : 'other'}${msg.MessageID}" alt="Avatar">
+                    <img class="chat-message-avatar" src="${avatarUrl}" alt="Avatar">
                     <div class="chat-message-content">
-                        <div class="chat-message-bubble">${escapeHtml(msg.MessageText)}</div>
+                        ${hasTextMessage ? `<div class="chat-message-bubble">${escapeHtml(msg.MessageText)}</div>` : ''}
+                        ${trackCard}
                         <div class="chat-message-time">${time}</div>
                     </div>
                 </div>
@@ -1325,7 +1507,10 @@ async function loadChatMessages() {
 
 // Send chat message
 async function sendChatMessage() {
-    const currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    if (!currentUserId) {
+        currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    }
     const input = document.getElementById('chatMessageInput');
     const messageText = input.value.trim();
     
@@ -1515,7 +1700,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const messageBtn = document.getElementById('messageBtn');
     if (messageBtn) {
-        messageBtn.addEventListener('click', openMessagesModal);
+        messageBtn.addEventListener('click', () => {
+            const profileUserId = new URLSearchParams(window.location.search).get('id');
+            const username = document.getElementById('profileUsername').textContent;
+            openChat(parseInt(profileUserId), username);
+        });
     }
     
     const sendMessageBtn = document.getElementById('sendMessageBtn');

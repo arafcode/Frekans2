@@ -10,15 +10,46 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Load user info
     const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+    let userId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    
+    if (!userId) {
+        userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    }
+    
     if (username) {
         const displayName = document.getElementById('userDisplayName');
         if (displayName) {
             displayName.textContent = username;
         }
+    }
+    
+    // Load actual avatar from database
+    if (userId) {
         const avatar = document.getElementById('userAvatar')?.querySelector('img');
-        if (avatar) {
-            avatar.src = `https://i.pravatar.cc/150?u=${username}`;
+        
+        // First, try to load cached avatar immediately
+        const cachedAvatar = localStorage.getItem('avatarUrl');
+        if (cachedAvatar && avatar) {
+            avatar.src = cachedAvatar;
         }
+        
+        // Then fetch fresh data and update cache
+        fetch(`${API_BASE_URL}/users/${userId}`)
+            .then(res => res.json())
+            .then(user => {
+                if (avatar) {
+                    let avatarUrl = user.AvatarUrl;
+                    if (!avatarUrl || avatarUrl.startsWith('/avatars/')) {
+                        avatarUrl = `https://i.pravatar.cc/150?u=${user.Username}`;
+                    }
+                    avatar.src = avatarUrl;
+                    localStorage.setItem('avatarUrl', avatarUrl);
+                    avatar.onerror = function() {
+                        this.src = `https://i.pravatar.cc/150?u=${user.Username}`;
+                    };
+                }
+            })
+            .catch(err => console.error('Error loading avatar:', err));
     }
 
     setupFileUploads();

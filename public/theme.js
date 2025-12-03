@@ -3,7 +3,13 @@
 // =============================================
 
 (function() {
-    // Always apply light theme (no dark-theme class)
-    document.body.classList.remove('dark-theme');
+    // Wait for DOM to be ready
+    if (document.body) {
+        document.body.classList.remove('dark-theme');
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.remove('dark-theme');
+        });
+    }
 })();
 

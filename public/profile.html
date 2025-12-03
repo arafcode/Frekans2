@@ -382,10 +382,10 @@
                 <div id="chatMessages" class="chat-messages"></div>
             </div>
             <div class="modal-footer" style="padding: 16px; border-top: 1px solid var(--border-color); background: white;">
-                <div style="display: flex; gap: 12px;">
-                    <input type="text" id="chatMessageInput" placeholder="Mesajınızı yazın..." style="flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px;" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                    <button onclick="sendChatMessage()" style="padding: 12px 24px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
+                    <input type="text" id="chatMessageInput" placeholder="Mesajınızı yazın..." style="flex: 1; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 15px; outline: none; transition: border-color 0.2s;" onkeypress="if(event.key==='Enter') sendChatMessage()" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='var(--border-color)'">
+                    <button onclick="sendChatMessage()" style="padding: 14px 20px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 56px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>

@@ -194,7 +194,14 @@ function displayTrackDetails(track) {
                         </svg>
                         <span id="likeCount">${track.LikeCount || 0}</span>
                     </button>
-                    <button class="share-btn" onclick="shareTrack()">
+                    <button id="addToPlaylistBtn" onclick="currentTrack && openAddToPlaylistModal(currentTrack.TrackID)" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 20px; background: #FFFFFF; border: 2px solid #E5E7EB; border-radius: 30px; font-size: 14px; font-weight: 600; color: #111827; cursor: pointer; transition: all 0.3s ease; font-family: Inter, sans-serif;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Listeye Ekle</span>
+                    </button>
+                    <button onclick="openShareModal()" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 20px; background: #FFFFFF; border: 2px solid #E5E7EB; border-radius: 30px; font-size: 14px; font-weight: 600; color: #111827; cursor: pointer; transition: all 0.3s ease; font-family: Inter, sans-serif;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="18" cy="5" r="3"></circle>
                             <circle cx="6" cy="12" r="3"></circle>
@@ -202,7 +209,7 @@ function displayTrackDetails(track) {
                             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                         </svg>
-                        Share
+                        <span>Paylaş</span>
                     </button>
                 </div>
                 <div class="track-stats">
@@ -522,26 +529,10 @@ async function toggleTrackLike() {
     }
 }
 
-// Share track
+// Share track - DEPRECATED, use openShareModal() instead
 function shareTrack() {
-    if (!currentTrack) return;
-
-    const url = window.location.href;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: currentTrack.Title,
-            text: `${currentTrack.Username} sanatçısının ${currentTrack.Title} şarkısını Frekans'ta dinle`,
-            url: url
-        }).catch(err => console.log('Paylaşım hatası:', err));
-    } else {
-        // Fallback: Copy to clipboard
-        navigator.clipboard.writeText(url).then(() => {
-            alert('Link panoya kopyalandı!');
-        }).catch(err => {
-            console.error('Kopyalama hatası:', err);
-        });
-    }
+    console.warn('⚠️ shareTrack() is deprecated, use openShareModal() instead');
+    openShareModal();
 }
 
 // Utility: Get cover image
@@ -699,16 +690,14 @@ function restorePlayerState() {
             const currentSeconds = Math.floor((state.progress / 100) * state.track.Duration);
             document.getElementById('currentTime').textContent = formatTime(currentSeconds);
             
-            // If saved track is DIFFERENT from page track, restore it to currentTrack
-            if (savedTrackId !== currentPageTrackId) {
-                currentTrack = state.track;
+            // IMPORTANT: Don't override currentTrack if we're on a different track detail page
+            // currentTrack is already set by loadTrackDetails() based on URL
+            // Only update progress if it's the same track
+            if (savedTrackId === currentPageTrackId) {
                 currentProgressValue = state.progress;
-                console.log('✅ Different track restored to player');
+                console.log('✅ Same track - restored progress only');
             } else {
-                // Same track - update currentTrack and progress
-                currentTrack = state.track;
-                currentProgressValue = state.progress;
-                console.log('✅ Same track - UI updated');
+                console.log('✅ Different track - showing saved player state but keeping current page track');
             }
             
             // Load audio and set position
@@ -942,6 +931,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Add to playlist button
+    const addBtn = document.getElementById('addToPlaylistBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            if (currentTrack) {
+                openAddToPlaylistModal(currentTrack.TrackID);
+            }
+        });
+    }
+    
+    // Share button - using onclick in HTML instead
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        console.log('✅ Share button found with onclick attribute');
+    } else {
+        console.error('❌ Share button not found!');
+    }
+    
     // Progress slider
     const progressSlider = document.getElementById('progressSlider');
     progressSlider?.addEventListener('input', (e) => {
@@ -1121,14 +1128,25 @@ async function loadPlaylistsForSelection() {
     const container = document.getElementById('playlistSelectionList');
     if (!container) return;
     
-    const userId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+    const userId = localStorage.getItem('userID') || localStorage.getItem('userId') || sessionStorage.getItem('userID') || sessionStorage.getItem('userId');
+    
+    console.log('🔍 Loading playlists for userId:', userId);
+    
+    if (!userId) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Giriş yapmanız gerekiyor</p>';
+        return;
+    }
     
     try {
         container.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div><p>Çalma listeleri yükleniyor...</p></div>';
         
-        const response = await fetch(`${API_BASE_URL}/playlists/user/${userId}?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/playlists?userId=${userId}`);
+        
+        console.log('📊 Playlist response status:', response.status);
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Playlist load error:', errorText);
             throw new Error('Failed to load playlists');
         }
         
@@ -1196,14 +1214,190 @@ async function addTrackToSelectedPlaylist(playlistId) {
     }
 }
 
-// Setup add to playlist button
-document.addEventListener('DOMContentLoaded', () => {
-    const addBtn = document.getElementById('addToPlaylistBtn');
-    if (addBtn) {
-        addBtn.addEventListener('click', () => {
-            if (currentTrack) {
-                openAddToPlaylistModal(currentTrack.TrackID);
-            }
-        });
+// =============================================
+// SHARE FUNCTIONS
+// =============================================
+
+// Open share modal
+async function openShareModal() {
+    console.log('🚀 openShareModal called', currentTrack);
+    
+    if (!currentTrack) {
+        console.error('❌ No current track!');
+        return;
     }
-});
+    
+    const modal = document.getElementById('shareModal');
+    const shareLink = document.getElementById('shareLink');
+    
+    console.log('📦 Modal element:', modal);
+    console.log('🔗 ShareLink element:', shareLink);
+    
+    if (!modal) {
+        console.error('❌ Share modal not found in DOM!');
+        return;
+    }
+    
+    // Set share link
+    const trackUrl = `${window.location.origin}/track-detail.html?id=${currentTrack.TrackID}`;
+    if (shareLink) {
+        shareLink.value = trackUrl;
+        console.log('✅ Share link set:', trackUrl);
+    }
+    
+    // Load friends list
+    await loadFriendsForShare();
+    
+    console.log('✅ Adding active class to modal');
+    
+    // Force display with inline styles to override cache
+    modal.style.display = 'flex';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.background = 'rgba(0, 0, 0, 0.6)';
+    modal.style.zIndex = '9999';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    
+    modal.classList.add('active');
+    console.log('📊 Modal classes:', modal.className);
+}
+
+// Close share modal
+// Close share modal
+function closeShareModal() {
+    const modal = document.getElementById('shareModal');
+    modal.classList.remove('active');
+    // Remove inline styles
+    modal.style.display = 'none';
+}
+
+// Copy share link
+function copyShareLink() {
+    const shareLink = document.getElementById('shareLink');
+    shareLink.select();
+    document.execCommand('copy');
+    showToast('Link kopyalandı!', 'success');
+}
+
+// Load friends for sharing
+async function loadFriendsForShare() {
+    const friendsList = document.getElementById('friendsList');
+    
+    try {
+        let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+        if (!currentUserId) {
+            currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        }
+        
+        if (!currentUserId) {
+            friendsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Arkadaş listesi yüklenemedi</p>';
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/users/${currentUserId}/following?currentUserID=${currentUserId}`);
+        if (!response.ok) throw new Error('Failed to load friends');
+        
+        const result = await response.json();
+        const following = result.data || result;
+        
+        // Filter only friends (mutual follows)
+        const friends = following.filter(u => u.IsFriend);
+        
+        if (friends.length === 0) {
+            friendsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz arkadaşın yok</p>';
+            return;
+        }
+        
+        friendsList.innerHTML = friends.map(friend => {
+            const avatarUrl = (friend.AvatarUrl && !friend.AvatarUrl.startsWith('/avatars/')) 
+                ? friend.AvatarUrl 
+                : `https://i.pravatar.cc/150?u=${friend.Username}`;
+            
+            return `
+                <div class="friend-share-item" data-user-id="${friend.UserID}">
+                    <img src="${avatarUrl}" alt="${friend.Username}" class="friend-share-avatar" onerror="this.src='https://i.pravatar.cc/150?u=${friend.Username}'">
+                    <div class="friend-share-info">
+                        <div class="friend-share-name">${friend.Username}</div>
+                        <div class="friend-share-status">Arkadaş</div>
+                    </div>
+                    <button class="friend-share-btn" onclick="shareToFriend(${friend.UserID}, '${friend.Username}', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Gönder
+                    </button>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error loading friends:', error);
+        friendsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Arkadaşlar yüklenirken hata oluştu</p>';
+    }
+}
+
+// Share to friend
+async function shareToFriend(friendUserId, friendUsername, buttonElement) {
+    if (!currentTrack) return;
+    
+    try {
+        let currentUserId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+        if (!currentUserId) {
+            currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        }
+        
+        // Create track card metadata for rich message display
+        const trackData = {
+            type: 'track_share',
+            trackId: currentTrack.TrackID,
+            title: currentTrack.Title,
+            artist: currentTrack.ArtistName || currentTrack.Username || 'Unknown Artist',
+            coverImage: currentTrack.CoverImageUrl,
+            duration: currentTrack.Duration,
+            url: `${window.location.origin}/track-detail.html?id=${currentTrack.TrackID}`
+        };
+        
+        const messageText = ' ';
+        
+        const requestBody = {
+            senderID: parseInt(currentUserId),
+            receiverID: parseInt(friendUserId),
+            messageText: messageText,
+            metadata: JSON.stringify(trackData)
+        };
+        
+        console.log('📤 Sending message with metadata:', requestBody);
+        
+        const response = await fetch(`${API_BASE_URL}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Mesaj gönderilemedi');
+        }
+        
+        // Update button state
+        buttonElement.classList.add('sent');
+        buttonElement.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Gönderildi
+        `;
+        buttonElement.disabled = true;
+        
+        showToast(`${friendUsername} kullanıcısına gönderildi!`, 'success');
+        
+    } catch (error) {
+        console.error('Error sharing to friend:', error);
+        showToast('Paylaşım başarısız: ' + error.message, 'error');
+    }
+}

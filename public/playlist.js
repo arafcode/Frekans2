@@ -113,10 +113,21 @@ async function loadUserAvatar() {
 function setupPlayer() {
     audioPlayer = document.getElementById('audioPlayer');
     
+    // Initialize play button state
+    const playBtn = document.getElementById('playPauseBtn');
+    if (playBtn) {
+        playBtn.classList.remove('playing');
+    }
+    
     audioPlayer.addEventListener('timeupdate', updateProgress);
     audioPlayer.addEventListener('ended', playNext);
+    audioPlayer.addEventListener('play', updatePlayButton);
+    audioPlayer.addEventListener('pause', updatePlayButton);
     audioPlayer.addEventListener('loadedmetadata', () => {
-        document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
+        const totalTime = document.getElementById('totalTime');
+        if (totalTime) {
+            totalTime.textContent = formatTime(audioPlayer.duration);
+        }
     });
 }
 
@@ -275,8 +286,8 @@ function playTrack(index) {
     
     // Update player
     audioPlayer.src = track.AudioUrl;
-    audioPlayer.play();
-    isPlaying = true;
+    audioPlayer.load();
+    audioPlayer.play().catch(err => console.error('Play error:', err));
     
     // Update player info
     document.getElementById('playerTitle').textContent = track.Title;
@@ -305,16 +316,19 @@ function playTrack(index) {
 
 // Toggle play/pause
 function togglePlayPause() {
-    if (!audioPlayer.src) return;
-    
-    if (isPlaying) {
-        audioPlayer.pause();
-    } else {
-        audioPlayer.play();
+    if (!audioPlayer.src) {
+        // Eğer şarkı yoksa ilk şarkıyı çal
+        if (playlistTracks.length > 0) {
+            playTrack(0);
+        }
+        return;
     }
     
-    isPlaying = !isPlaying;
-    updatePlayButton();
+    if (audioPlayer.paused) {
+        audioPlayer.play().catch(err => console.error('Play error:', err));
+    } else {
+        audioPlayer.pause();
+    }
 }
 
 // Play next
@@ -340,16 +354,12 @@ function playPrevious() {
 // Update play button icon
 function updatePlayButton() {
     const btn = document.getElementById('playPauseBtn');
-    btn.innerHTML = isPlaying ? `
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="4" width="4" height="16"></rect>
-            <rect x="14" y="4" width="4" height="16"></rect>
-        </svg>
-    ` : `
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-    `;
+    
+    if (!audioPlayer.paused) {
+        btn.classList.add('playing');
+    } else {
+        btn.classList.remove('playing');
+    }
 }
 
 // Update progress
@@ -359,9 +369,13 @@ function updateProgress() {
     
     if (duration) {
         const percentage = (current / duration) * 100;
-        document.getElementById('progressBar').style.width = percentage + '%';
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            progressFill.style.width = percentage + '%';
+        }
         document.getElementById('progressSlider').value = percentage;
         document.getElementById('currentTime').textContent = formatTime(current);
+        document.getElementById('totalTime').textContent = formatTime(duration);
     }
 }
 
@@ -373,7 +387,12 @@ function seek(e) {
 
 // Change volume
 function changeVolume(e) {
-    audioPlayer.volume = e.target.value / 100;
+    const volume = e.target.value / 100;
+    audioPlayer.volume = volume;
+    
+    // Update slider background
+    const percentage = e.target.value;
+    e.target.style.background = `linear-gradient(to right, var(--primary-color) 0%, var(--primary-color) ${percentage}%, var(--border-color) ${percentage}%, var(--border-color) 100%)`;
 }
 
 // Toggle add track section
