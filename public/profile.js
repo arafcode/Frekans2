@@ -1389,11 +1389,11 @@ async function openChat(userId, username) {
         document.getElementById('chatUserStatus').textContent = 'Son görülme bilinmiyor';
     }
     
-    // Load messages
-    await loadChatMessages();
-    
-    // Show modal
+    // Show modal first
     document.getElementById('chatModal').classList.add('active');
+    
+    // Load messages after modal is visible
+    await loadChatMessages();
 }
 
 // Close chat modal
@@ -1492,8 +1492,17 @@ async function loadChatMessages() {
             `;
         }).join('');
         
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // Scroll to bottom - scroll the parent modal-body container
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                const modalBody = messagesContainer.closest('.modal-body');
+                if (modalBody) {
+                    modalBody.scrollTop = modalBody.scrollHeight;
+                } else {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }, 150);
+        });
         
     } catch (error) {
         console.error('Error loading messages:', error);

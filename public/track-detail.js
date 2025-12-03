@@ -38,28 +38,39 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Load avatar from database
     if (userId) {
         const avatar = document.getElementById('userAvatar')?.querySelector('img');
+        const commentAvatar = document.getElementById('currentUserAvatar');
         
         // First, try to load cached avatar immediately
         const cachedAvatar = localStorage.getItem('avatarUrl');
-        if (cachedAvatar && avatar) {
-            avatar.src = cachedAvatar;
+        if (cachedAvatar) {
+            if (avatar) avatar.src = cachedAvatar;
+            if (commentAvatar) commentAvatar.src = cachedAvatar;
         }
         
         // Then fetch fresh data and update cache
         fetch(`${API_BASE_URL}/users/${userId}`)
             .then(res => res.json())
             .then(user => {
+                let avatarUrl = user.AvatarUrl;
+                if (!avatarUrl || avatarUrl.startsWith('/avatars/')) {
+                    avatarUrl = `https://i.pravatar.cc/150?u=${user.Username}`;
+                }
+                
                 if (avatar) {
-                    let avatarUrl = user.AvatarUrl;
-                    if (!avatarUrl || avatarUrl.startsWith('/avatars/')) {
-                        avatarUrl = `https://i.pravatar.cc/150?u=${user.Username}`;
-                    }
                     avatar.src = avatarUrl;
-                    localStorage.setItem('avatarUrl', avatarUrl);
                     avatar.onerror = function() {
                         this.src = `https://i.pravatar.cc/150?u=${user.Username}`;
                     };
                 }
+                
+                if (commentAvatar) {
+                    commentAvatar.src = avatarUrl;
+                    commentAvatar.onerror = function() {
+                        this.src = `https://i.pravatar.cc/150?u=${user.Username}`;
+                    };
+                }
+                
+                localStorage.setItem('avatarUrl', avatarUrl);
             })
             .catch(err => console.error('Error loading avatar:', err));
     }
@@ -186,7 +197,7 @@ function displayTrackDetails(track) {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
-                        Play
+                        <span>Oynat</span>
                     </button>
                     <button class="like-track-btn ${track.IsLiked ? 'liked' : ''}" onclick="toggleTrackLike()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -240,16 +251,16 @@ function displayTrackDetails(track) {
         </div>
 
         <div class="comments-section">
-            <h3>Comments</h3>
+            <h3>Yorumlar</h3>
             <div class="comment-input">
                 <img src="https://i.pravatar.cc/150?u=currentuser" alt="Your avatar">
-                <input type="text" id="commentInput" placeholder="Write a comment...">
-                <button class="post-comment-btn" onclick="postComment()">Post</button>
+                <input type="text" id="commentInput" placeholder="Yorum yaz...">
+                <button class="post-comment-btn" onclick="postComment()">Gönder</button>
             </div>
             <div class="comments-list" id="commentsList">
                 <div class="loading-state">
                     <div class="loading-spinner"></div>
-                    <p>Loading comments...</p>
+                    <p>Yorumlar yüklüyor...</p>
                 </div>
             </div>
         </div>
@@ -411,7 +422,7 @@ async function playCurrentTrack() {
                 <rect x="6" y="4" width="4" height="16"></rect>
                 <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
-            Playing
+            <span>Çalıyor</span>
         `;
     }
     
@@ -579,21 +590,21 @@ function getTimeAgo(date) {
     const seconds = Math.floor((new Date() - date) / 1000);
     
     let interval = Math.floor(seconds / 31536000);
-    if (interval >= 1) return interval + ' year' + (interval > 1 ? 's' : '') + ' ago';
+    if (interval >= 1) return interval + ' yıl önce';
     
     interval = Math.floor(seconds / 2592000);
-    if (interval >= 1) return interval + ' month' + (interval > 1 ? 's' : '') + ' ago';
+    if (interval >= 1) return interval + ' ay önce';
     
     interval = Math.floor(seconds / 86400);
-    if (interval >= 1) return interval + ' day' + (interval > 1 ? 's' : '') + ' ago';
+    if (interval >= 1) return interval + ' gün önce';
     
     interval = Math.floor(seconds / 3600);
-    if (interval >= 1) return interval + ' hour' + (interval > 1 ? 's' : '') + ' ago';
+    if (interval >= 1) return interval + ' saat önce';
     
     interval = Math.floor(seconds / 60);
-    if (interval >= 1) return interval + ' minute' + (interval > 1 ? 's' : '') + ' ago';
+    if (interval >= 1) return interval + ' dakika önce';
     
-    return 'Just now';
+    return 'Şimdi';
 }
 
 // Utility: Escape HTML

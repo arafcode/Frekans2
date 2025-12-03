@@ -50,7 +50,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
-                    Back
+                    Geri
                 </button>
 
                 <!-- User Profile -->
@@ -122,10 +122,10 @@
                         <div class="track-genre" id="trackGenre">Tür</div>
                         <h1 class="track-hero-title" id="trackTitle">Track Title</h1>
                         <div class="track-hero-artist">
-                            <img id="artistAvatar" src="" alt="Artist">
+                            <img id="artistAvatar" src="" alt="Sanatçı">
                             <div>
-                                <div class="artist-name" id="artistName">Artist Name</div>
-                                <div class="upload-date" id="uploadDate">Yayınlandı</div>
+                                <div class="artist-name" id="artistName">Sanatçı Adı</div>
+                                <div class="artist-label">Sanatçı</div>
                             </div>
                         </div>
                         
@@ -135,7 +135,7 @@
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M8 5v14l11-7z"/>
                                 </svg>
-                                Play
+                                <span>Oynat</span>
                             </button>
                             <button class="like-track-btn" id="likeTrackBtn">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -197,9 +197,9 @@
                 <div class="comments-section">
                     <h3>Yorumlar</h3>
                     <div class="comment-input">
-                        <img src="https://i.pravatar.cc/150?img=12" alt="User">
-                        <input type="text" placeholder="Write a comment..." id="commentInput">
-                        <button class="post-comment-btn" id="postCommentBtn">Post</button>
+                        <img id="currentUserAvatar" src="https://i.pravatar.cc/150?img=1" alt="User">
+                        <input type="text" placeholder="Yorum yaz..." id="commentInput">
+                        <button class="post-comment-btn" id="postCommentBtn">Gönder</button>
                     </div>
                     <div class="comments-list" id="commentsList">
                         <!-- Comments will be loaded here -->
@@ -217,8 +217,8 @@
                     <img src="https://picsum.photos/60/60?random=999" alt="Cover" id="playerCover">
                 </div>
                 <div class="player-details">
-                    <div class="player-title" id="playerTitle" style="cursor: pointer;">Select a track to play</div>
-                    <div class="player-artist" id="playerArtist" style="cursor: pointer;">Artist</div>
+                    <div class="player-title" id="playerTitle" style="cursor: pointer;">Çalmak için bir şarkı seçin</div>
+                    <div class="player-artist" id="playerArtist" style="cursor: pointer;">Sanatçı</div>
                 </div>
                 <button class="player-like-btn" id="playerLikeBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">

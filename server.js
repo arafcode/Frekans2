@@ -2234,32 +2234,90 @@ app.post('/api/sql-query', async (req, res) => {
 
         console.log('🔍 SQL Query Request:', query.substring(0, 100));
 
+        // Capture PRINT messages from SQL Server
+        const printMessages = [];
         const request = pool.request();
-        const result = await request.query(query);
+        
+        request.on('info', (info) => {
+            printMessages.push(info.message);
+        });
+
+        // Split queries by GO statement (batch separator)
+        const batches = query.split(/\bGO\b/gi).map(b => b.trim()).filter(b => b.length > 0);
+        
+        let result;
+        let allRecordsets = [];
+        let totalRowsAffected = 0;
+
+        // Execute each batch separately
+        for (const batch of batches) {
+            if (!batch.trim()) continue;
+            
+            const batchRequest = pool.request();
+            batchRequest.on('info', (info) => {
+                printMessages.push(info.message);
+            });
+
+            try {
+                result = await batchRequest.batch(batch);
+                
+                // Collect recordsets
+                if (result.recordset && result.recordset.length > 0) {
+                    allRecordsets.push(...result.recordset);
+                }
+                
+                // Sum up affected rows
+                if (result.rowsAffected && result.rowsAffected.length > 0) {
+                    totalRowsAffected += result.rowsAffected.reduce((sum, num) => sum + num, 0);
+                }
+            } catch (batchError) {
+                // If batch fails, try as regular query
+                const fallbackRequest = pool.request();
+                fallbackRequest.on('info', (info) => {
+                    printMessages.push(info.message);
+                });
+                result = await fallbackRequest.query(batch);
+                
+                if (result.recordset && result.recordset.length > 0) {
+                    allRecordsets.push(...result.recordset);
+                }
+                if (result.rowsAffected && result.rowsAffected.length > 0) {
+                    totalRowsAffected += result.rowsAffected.reduce((sum, num) => sum + num, 0);
+                }
+            }
+        }
 
         // Check if it's a SELECT query (returns rows)
-        if (result.recordset && result.recordset.length > 0) {
+        if (allRecordsets.length > 0) {
             res.json({
                 success: true,
-                results: result.recordset,
-                rowCount: result.recordset.length
+                results: allRecordsets,
+                rowCount: allRecordsets.length,
+                messages: printMessages.length > 0 ? printMessages : undefined
             });
         } 
-        // For INSERT, UPDATE, DELETE operations
-        else if (result.rowsAffected && result.rowsAffected.length > 0) {
-            const totalAffected = result.rowsAffected.reduce((sum, num) => sum + num, 0);
+        // For INSERT, UPDATE, DELETE, CREATE, ALTER, DROP operations
+        else if (totalRowsAffected > 0) {
             res.json({
                 success: true,
                 message: 'Sorgu başarıyla çalıştırıldı.',
-                rowsAffected: totalAffected
+                rowsAffected: totalRowsAffected,
+                messages: printMessages.length > 0 ? printMessages : undefined
             });
         }
-        // Query returned no results
+        // Query returned no results but may have PRINT messages or DDL commands
         else {
+            // Check if it's a DDL command (CREATE, ALTER, DROP, etc.)
+            const isDDL = /\b(CREATE|ALTER|DROP|TRUNCATE|BACKUP|RESTORE)\b/i.test(query);
+            const message = isDDL 
+                ? 'Komut başarıyla çalıştırıldı.' 
+                : (printMessages.length > 0 ? 'PRINT çıktıları:' : 'Sorgu başarıyla çalıştırıldı, ancak sonuç döndürmedi.');
+            
             res.json({
                 success: true,
                 results: [],
-                message: 'Sorgu başarıyla çalıştırıldı, ancak sonuç döndürmedi.'
+                message: message,
+                messages: printMessages.length > 0 ? printMessages : undefined
             });
         }
 
