@@ -1355,9 +1355,10 @@ app.post('/api/upload', upload.fields([
         const insertQuery = `
             INSERT INTO [Music].[Tracks] 
             (Title, ArtistID, GenreID, DurationSeconds, AudioUrl, CoverImageUrl, IsPublic, Slug, UploadDate)
-            OUTPUT INSERTED.TrackID
             VALUES 
             (@Title, @ArtistID, @GenreID, @DurationSeconds, @AudioUrl, @CoverImageUrl, @IsPublic, @Slug, GETDATE());
+            
+            SELECT SCOPE_IDENTITY() AS TrackID;
         `;
 
         const result = await request.query(insertQuery);
@@ -1373,14 +1374,17 @@ app.post('/api/upload', upload.fields([
 
     } catch (error) {
         console.error('❌ /api/upload hatası:', error.message);
+        console.error('Stack:', error.stack);
+        console.error('Request body:', req.body);
+        console.error('Files:', req.files ? Object.keys(req.files) : 'No files');
         
         // Clean up uploaded files if database insert fails
         if (req.files) {
             if (req.files.audioFile) {
-                fs.unlinkSync(req.files.audioFile[0].path);
+                try { fs.unlinkSync(req.files.audioFile[0].path); } catch(e) {}
             }
             if (req.files.coverImage) {
-                fs.unlinkSync(req.files.coverImage[0].path);
+                try { fs.unlinkSync(req.files.coverImage[0].path); } catch(e) {}
             }
         }
 
