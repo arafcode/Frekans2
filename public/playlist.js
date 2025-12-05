@@ -535,7 +535,11 @@ function deletePlaylist() {
 
 // Get cover image
 function getCoverImage(track) {
-    if (track.CoverImageUrl && track.CoverImageUrl.trim() && !track.CoverImageUrl.includes('placeholder')) {
+    if (track.CoverImageUrl && track.CoverImageUrl.trim() && !track.CoverImageUrl.includes('placeholder') && !track.CoverImageUrl.includes('default-cover')) {
+        // Check if it's a relative path and prepend base URL
+        if (track.CoverImageUrl.startsWith('/uploads')) {
+            return track.CoverImageUrl;
+        }
         return track.CoverImageUrl;
     }
     const seed = track.TrackID || Math.floor(Math.random() * 1000);
