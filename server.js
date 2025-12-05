@@ -2124,7 +2124,7 @@ app.delete('/api/playlists/:id/tracks/:trackId', async (req, res) => {
     try {
         const playlistId = parseInt(req.params.id);
         const trackId = parseInt(req.params.trackId);
-        const userId = req.query.userId;
+        const userId = req.body.userId || req.query.userId;
 
         if (!playlistId || !trackId || !userId) {
             return res.status(400).json({
