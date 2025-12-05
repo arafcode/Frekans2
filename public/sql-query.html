@@ -633,7 +633,12 @@ SELECT 'Yedekleme komutları yalnızca sistem admini tarafından çalıştırıl
             {
                 category: 'view',
                 title: 'Basit VIEW Oluşturma',
-                code: `CREATE VIEW vw_PopulerSarkilar AS
+                code: `-- Önce varsa sil
+IF OBJECT_ID('vw_PopulerSarkilar', 'V') IS NOT NULL
+    DROP VIEW vw_PopulerSarkilar
+GO
+
+CREATE VIEW vw_PopulerSarkilar AS
 SELECT 
     t.Title,
     u.Username AS Sanatci,
@@ -645,29 +650,55 @@ GROUP BY t.Title, u.Username`
             },
             {
                 category: 'view',
-                title: 'VIEW Kullanımı',
-                code: `-- Önce view oluşturulmalı
+                title: 'VIEW Kullanımı - Popüler Şarkılar',
+                code: `-- VIEW'den veri çekme
 SELECT * FROM vw_PopulerSarkilar
-WHERE CalmaSayisi > 10
+WHERE CalmaSayisi > 0
 ORDER BY CalmaSayisi DESC`
             },
             {
                 category: 'view',
+                title: 'VIEW Kullanımı - Kullanıcı Özeti',
+                code: `-- Şifreli VIEW'den veri çekme
+SELECT TOP 10 * FROM vw_KullaniciOzeti
+ORDER BY CreatedAt DESC`
+            },
+            {
+                category: 'view',
+                title: 'VIEW Kullanımı - Şarkı İstatistikleri',
+                code: `-- Indexed VIEW'den veri çekme
+SELECT TOP 20 
+    t.Title,
+    v.CalmaSayisi
+FROM vw_SarkiIstatistikleri v
+INNER JOIN [Music].[Tracks] t ON v.TrackID = t.TrackID
+ORDER BY v.CalmaSayisi DESC`
+            },
+            {
+                category: 'view',
                 title: 'Şifreli VIEW (WITH ENCRYPTION)',
-                code: `CREATE VIEW vw_KullaniciOzeti
+                code: `IF OBJECT_ID('vw_KullaniciOzeti', 'V') IS NOT NULL
+    DROP VIEW vw_KullaniciOzeti
+GO
+
+CREATE VIEW vw_KullaniciOzeti
 WITH ENCRYPTION
 AS
 SELECT 
     UserID,
     Username,
     Email,
-    CreatedDate
+    CreatedAt
 FROM [Identity].[Users]`
             },
             {
                 category: 'view',
                 title: 'Indexed VIEW için Hazırlık',
                 code: `-- Indexed View şeması
+IF OBJECT_ID('vw_SarkiIstatistikleri', 'V') IS NOT NULL
+    DROP VIEW vw_SarkiIstatistikleri
+GO
+
 CREATE VIEW vw_SarkiIstatistikleri
 WITH SCHEMABINDING
 AS
@@ -694,17 +725,26 @@ WHERE OBJECT_NAME(i.object_id) = 'Users'`
             {
                 category: 'index',
                 title: 'Non-Clustered Index Oluşturma',
-                code: `-- Username üzerinde index oluştur
-CREATE NONCLUSTERED INDEX IX_Users_Username
+                code: `-- Username üzerinde index oluştur (varsa önce sil)
+IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_Username_Custom' AND object_id = OBJECT_ID('[Identity].[Users]'))
+    DROP INDEX IX_Users_Username_Custom ON [Identity].[Users]
+GO
+
+CREATE NONCLUSTERED INDEX IX_Users_Username_Custom
 ON [Identity].[Users] (Username)
+GO
 
 -- Performans testi
-SELECT * FROM [Identity].[Users] WHERE Username = 'testuser'`
+SELECT * FROM [Identity].[Users] WHERE Username LIKE 'test%'`
             },
             {
                 category: 'index',
                 title: 'Scalar-Valued UDF - Şarkı Süresini Formatlama',
-                code: `CREATE FUNCTION dbo.fn_FormatDuration(@Seconds INT)
+                code: `IF OBJECT_ID('dbo.fn_FormatDuration', 'FN') IS NOT NULL
+    DROP FUNCTION dbo.fn_FormatDuration
+GO
+
+CREATE FUNCTION dbo.fn_FormatDuration(@Seconds INT)
 RETURNS VARCHAR(20)
 AS
 BEGIN
@@ -713,15 +753,24 @@ BEGIN
     RETURN CAST(@Minutes AS VARCHAR) + ':' + 
            RIGHT('0' + CAST(@Secs AS VARCHAR), 2)
 END
+GO
 
--- Kullanımı
--- SELECT Title, dbo.fn_FormatDuration(DurationSeconds) AS Sure
--- FROM [Music].[Tracks]`
+-- Function oluşturuldu, şimdi kullan
+SELECT TOP 10
+    Title,
+    DurationSeconds,
+    dbo.fn_FormatDuration(DurationSeconds) AS FormattedDuration
+FROM [Music].[Tracks]
+ORDER BY DurationSeconds DESC`
             },
             {
                 category: 'index',
                 title: 'Table-Valued UDF',
-                code: `CREATE FUNCTION dbo.fn_GetUserTracks(@UserID INT)
+                code: `IF OBJECT_ID('dbo.fn_GetUserTracks', 'IF') IS NOT NULL
+    DROP FUNCTION dbo.fn_GetUserTracks
+GO
+
+CREATE FUNCTION dbo.fn_GetUserTracks(@UserID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -730,16 +779,26 @@ RETURN
     FROM [Music].[Tracks]
     WHERE ArtistID = @UserID
 )
+GO
 
--- Kullanımı
--- SELECT * FROM dbo.fn_GetUserTracks(1)`
+-- Function oluşturuldu, şimdi kullan
+-- Şarkı yükleyen kullanıcıları bul ve fonksiyonu kullan
+SELECT u.Username, COUNT(*) AS ToplamSarki
+FROM [Identity].[Users] u
+CROSS APPLY dbo.fn_GetUserTracks(u.UserID) tracks
+GROUP BY u.Username
+ORDER BY ToplamSarki DESC`
             },
 
             // DERS 10: Stored Procedures
             {
                 category: 'procedure',
                 title: 'Basit Stored Procedure',
-                code: `CREATE PROCEDURE sp_GetTopTracks
+                code: `IF OBJECT_ID('sp_GetTopTracks', 'P') IS NOT NULL
+    DROP PROCEDURE sp_GetTopTracks
+GO
+
+CREATE PROCEDURE sp_GetTopTracks
     @TopN INT = 10
 AS
 BEGIN
@@ -753,14 +812,19 @@ BEGIN
     GROUP BY t.Title, u.Username
     ORDER BY PlayCount DESC
 END
+GO
 
--- Çalıştırma
--- EXEC sp_GetTopTracks @TopN = 5`
+-- Procedure oluşturuldu, şimdi çalıştır
+EXEC sp_GetTopTracks @TopN = 5`
             },
             {
                 category: 'procedure',
                 title: 'Output Parametreli Procedure',
-                code: `CREATE PROCEDURE sp_GetUserStats
+                code: `IF OBJECT_ID('sp_GetUserStats', 'P') IS NOT NULL
+    DROP PROCEDURE sp_GetUserStats
+GO
+
+CREATE PROCEDURE sp_GetUserStats
     @UserID INT,
     @TrackCount INT OUTPUT,
     @FollowerCount INT OUTPUT
@@ -772,13 +836,15 @@ BEGIN
     
     SELECT @FollowerCount = COUNT(*) 
     FROM [Interaction].[Follows] 
-    WHERE FollowedID = @UserID
+    WHERE FollowingID = @UserID
 END
+GO
 
--- Çalıştırma
--- DECLARE @Tracks INT, @Followers INT
--- EXEC sp_GetUserStats @UserID = 1, @TrackCount = @Tracks OUTPUT, @FollowerCount = @Followers OUTPUT
--- PRINT 'Şarkılar: ' + CAST(@Tracks AS VARCHAR) + ', Takipçi: ' + CAST(@Followers AS VARCHAR)`
+-- Procedure oluşturuldu, şimdi çalıştır (gerçek kullanıcı ID ile)
+DECLARE @Tracks INT, @Followers INT, @CurrentUserID INT
+SELECT @CurrentUserID = UserID FROM [Identity].[Users] WHERE Username = 'admin' -- veya başka bir kullanıcı
+EXEC sp_GetUserStats @UserID = @CurrentUserID, @TrackCount = @Tracks OUTPUT, @FollowerCount = @Followers OUTPUT
+PRINT 'Şarkılar: ' + CAST(@Tracks AS VARCHAR) + ', Takipçi: ' + CAST(@Followers AS VARCHAR)`
             },
             {
                 category: 'procedure',
@@ -796,19 +862,27 @@ ORDER BY modify_date DESC`
             {
                 category: 'transaction',
                 title: 'Basit Transaction - BEGIN/COMMIT',
-                code: `BEGIN TRANSACTION
+                code: `BEGIN TRANSACTION;
 
-INSERT INTO [Identity].[Users] (Username, Email, PasswordHash, Bio)
-VALUES ('newuser', 'new@example.com', 'hash123', 'Test user')
+DECLARE @NewUserID INT;
+DECLARE @NewTrackID INT;
+DECLARE @GenreID INT;
 
-DECLARE @NewUserID INT = SCOPE_IDENTITY()
+-- Mevcut bir kullanıcı ID'si al
+SELECT TOP 1 @NewUserID = UserID FROM [Identity].[Users] WHERE Username = 'admin';
 
-INSERT INTO [Music].[Tracks] (Title, ArtistID, FilePath, DurationSeconds)
-VALUES ('New Song', @NewUserID, '/audio/newsong.mp3', 180)
+-- Mevcut bir GenreID al
+SELECT TOP 1 @GenreID = GenreID FROM [Music].[Genres];
 
-COMMIT TRANSACTION
+-- Şarkı ekle
+INSERT INTO [Music].[Tracks] (Title, Slug, ArtistID, AudioUrl, DurationSeconds, GenreID)
+VALUES ('Test Transaction Song', 'test-transaction-song-' + CAST(NEWID() AS VARCHAR(36)), @NewUserID, '/audio/test-transaction.mp3', 180, @GenreID);
 
-SELECT 'Transaction başarıyla tamamlandı!' AS Sonuc`
+SET @NewTrackID = SCOPE_IDENTITY();
+
+COMMIT TRANSACTION;
+
+SELECT 'Transaction başarıyla tamamlandı!' AS Sonuc, @NewTrackID AS YeniSarkiID;`
             },
             {
                 category: 'transaction',
@@ -836,8 +910,8 @@ END`
     BEGIN TRANSACTION
     
     -- Hatalı işlem (yabancı anahtar ihlali)
-    INSERT INTO [Music].[Tracks] (Title, ArtistID, FilePath, DurationSeconds)
-    VALUES ('Test Song', 99999, '/audio/test.mp3', 200)
+    INSERT INTO [Music].[Tracks] (Title, Slug, ArtistID, AudioUrl, DurationSeconds, GenreID)
+    VALUES ('Test Song', 'test-error-song', 99999, '/audio/test.mp3', 200, 1)
     
     COMMIT TRANSACTION
     PRINT 'İşlem başarılı'
@@ -858,17 +932,22 @@ END CATCH`
     BEGIN TRANSACTION
     
     UPDATE [Identity].[Users]
-    SET Bio = 'Güncellenen biyografi'
-    WHERE UserID = 1
+    SET Bio = 'Güncellenen biyografi - ' + CONVERT(VARCHAR, GETDATE(), 120)
+    WHERE UserID = (SELECT TOP 1 UserID FROM [Identity].[Users])
     
     IF XACT_STATE() = 1
+    BEGIN
         COMMIT TRANSACTION
+        PRINT 'Transaction başarıyla tamamlandı (XACT_STATE = 1)'
+    END
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0
+    BEGIN
         ROLLBACK TRANSACTION
-    
-    PRINT 'Transaction durumu: ' + CAST(XACT_STATE() AS VARCHAR)
+        PRINT 'Transaction geri alındı (XACT_STATE = ' + CAST(XACT_STATE() AS VARCHAR) + ')'
+    END
+    PRINT 'HATA: ' + ERROR_MESSAGE()
 END CATCH`
             },
 
@@ -876,7 +955,11 @@ END CATCH`
             {
                 category: 'trigger',
                 title: 'AFTER INSERT Trigger',
-                code: `CREATE TRIGGER trg_AfterTrackInsert
+                code: `IF OBJECT_ID('[Music].[trg_AfterTrackInsert]', 'TR') IS NOT NULL
+    DROP TRIGGER [Music].[trg_AfterTrackInsert]
+GO
+
+CREATE TRIGGER [Music].[trg_AfterTrackInsert]
 ON [Music].[Tracks]
 AFTER INSERT
 AS
@@ -889,12 +972,25 @@ BEGIN
     
     PRINT 'Yeni şarkı eklendi: ' + @TrackTitle
     PRINT 'Sanatçı ID: ' + CAST(@ArtistID AS VARCHAR)
-END`
+END
+GO
+
+-- Trigger test et
+DECLARE @TestUserID INT, @TestGenreID INT
+SELECT TOP 1 @TestUserID = UserID FROM [Identity].[Users]
+SELECT TOP 1 @TestGenreID = GenreID FROM [Music].[Genres]
+
+INSERT INTO [Music].[Tracks] (Title, Slug, ArtistID, AudioUrl, DurationSeconds, GenreID)
+VALUES ('Trigger Test Song', 'trigger-test-' + CAST(NEWID() AS VARCHAR(36)), @TestUserID, '/audio/trigger-test.mp3', 150, @TestGenreID)`
             },
             {
                 category: 'trigger',
                 title: 'AFTER UPDATE Trigger',
-                code: `CREATE TRIGGER trg_AfterUserUpdate
+                code: `IF OBJECT_ID('[Identity].[trg_AfterUserUpdate]', 'TR') IS NOT NULL
+    DROP TRIGGER [Identity].[trg_AfterUserUpdate]
+GO
+
+CREATE TRIGGER [Identity].[trg_AfterUserUpdate]
 ON [Identity].[Users]
 AFTER UPDATE
 AS
@@ -906,12 +1002,22 @@ BEGIN
         
         PRINT @Username + ' kullanıcısı biyografisini güncelledi'
     END
-END`
+END
+GO
+
+-- Trigger test et
+UPDATE [Identity].[Users]
+SET Bio = 'Güncellenmiş biyografi - ' + CONVERT(VARCHAR, GETDATE(), 120)
+WHERE UserID = (SELECT TOP 1 UserID FROM [Identity].[Users])`
             },
             {
                 category: 'trigger',
                 title: 'AFTER DELETE Trigger',
-                code: `CREATE TRIGGER trg_AfterTrackDelete
+                code: `IF OBJECT_ID('[Music].[trg_AfterTrackDelete]', 'TR') IS NOT NULL
+    DROP TRIGGER [Music].[trg_AfterTrackDelete]
+GO
+
+CREATE TRIGGER [Music].[trg_AfterTrackDelete]
 ON [Music].[Tracks]
 AFTER DELETE
 AS
@@ -924,23 +1030,56 @@ BEGIN
     -- İlgili kayıtları da temizle
     DELETE FROM [Interaction].[Plays]
     WHERE TrackID IN (SELECT TrackID FROM deleted)
-END`
+END
+GO
+
+-- Trigger test et - önce test şarkısı oluştur ve sil
+DECLARE @TestTrackID INT, @TestUserID INT, @TestGenreID INT
+SELECT TOP 1 @TestUserID = UserID FROM [Identity].[Users]
+SELECT TOP 1 @TestGenreID = GenreID FROM [Music].[Genres]
+
+INSERT INTO [Music].[Tracks] (Title, Slug, ArtistID, AudioUrl, DurationSeconds, GenreID)
+VALUES ('Silinecek Test Şarkı', 'delete-test-' + CAST(NEWID() AS VARCHAR(36)), @TestUserID, '/audio/delete-test.mp3', 120, @TestGenreID)
+
+SET @TestTrackID = SCOPE_IDENTITY()
+
+-- Şimdi sil ve trigger'ı tetikle
+DELETE FROM [Music].[Tracks] WHERE TrackID = @TestTrackID`
             },
             {
                 category: 'trigger',
                 title: 'INSTEAD OF Trigger',
-                code: `CREATE TRIGGER trg_InsteadOfUserDelete
+                code: `IF OBJECT_ID('[Identity].[trg_InsteadOfUserDelete]', 'TR') IS NOT NULL
+    DROP TRIGGER [Identity].[trg_InsteadOfUserDelete]
+GO
+
+CREATE TRIGGER [Identity].[trg_InsteadOfUserDelete]
 ON [Identity].[Users]
 INSTEAD OF DELETE
 AS
 BEGIN
     -- Kullanıcıyı silmek yerine pasif yap
     UPDATE [Identity].[Users]
-    SET Bio = Bio + ' [DEAKTİF]'
+    SET Bio = ISNULL(Bio, '') + ' [DEAKTİF]'
     WHERE UserID IN (SELECT UserID FROM deleted)
     
     PRINT 'Kullanıcı silme işlemi deaktif etme ile değiştirildi'
-END`
+END
+GO
+
+-- Trigger test et - test kullanıcısı oluştur ve silmeye çalış
+DECLARE @TestUserID INT
+
+INSERT INTO [Identity].[Users] (Username, Email, PasswordHash, Bio)
+VALUES ('testuser' + CAST(ABS(CHECKSUM(NEWID())) % 10000 AS VARCHAR), 'test@example.com', 'hash123', 'Test kullanıcı')
+
+SET @TestUserID = SCOPE_IDENTITY()
+
+-- Şimdi sil (ama trigger INSTEAD OF çalışacak)
+DELETE FROM [Identity].[Users] WHERE UserID = @TestUserID
+
+-- Kontrol et (silinmedi, deaktif oldu)
+SELECT Username, Bio FROM [Identity].[Users] WHERE UserID = @TestUserID`
             },
             {
                 category: 'trigger',
