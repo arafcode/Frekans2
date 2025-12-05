@@ -1763,7 +1763,7 @@ async function startServer() {
         await connectDatabase();
 
         // Express sunucusunu başlat
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             console.log('');
             console.log('========================================');
             console.log('🎵 Frekans Müzik API');
@@ -1782,6 +1782,11 @@ async function startServer() {
             console.log(`   POST /api/comments        - Yorum ekle`);
             console.log('========================================');
         });
+
+        // Increase timeout for file uploads (5 minutes)
+        server.timeout = 300000;
+        server.keepAliveTimeout = 300000;
+        server.headersTimeout = 300000;
 
     } catch (error) {
         console.error('❌ Server başlatılamadı:', error.message);

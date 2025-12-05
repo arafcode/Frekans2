@@ -564,7 +564,7 @@ ORDER BY CalmaAdedi DESC`
     u2.Username AS TakipEdilen
 FROM [Interaction].[Follows] f
 FULL OUTER JOIN [Identity].[Users] u1 ON f.FollowerID = u1.UserID
-FULL OUTER JOIN [Identity].[Users] u2 ON f.FollowedID = u2.UserID`
+FULL OUTER JOIN [Identity].[Users] u2 ON f.FollowingID = u2.UserID`
             },
             {
                 category: 'join',
@@ -573,7 +573,7 @@ FULL OUTER JOIN [Identity].[Users] u2 ON f.FollowedID = u2.UserID`
     m.MessageID,
     u1.Username AS Gonderen,
     u2.Username AS Alici,
-    m.Content AS Mesaj,
+    m.MessageText AS Mesaj,
     m.SentDate AS Tarih
 FROM [Interaction].[Messages] m
 INNER JOIN [Identity].[Users] u1 ON m.SenderID = u1.UserID
@@ -595,9 +595,9 @@ ORDER BY m.SentDate DESC`
                 title: 'DATEADD ve DATEDIFF - Tarih Hesaplamaları',
                 code: `SELECT 
     Username,
-    CreatedDate AS KayitTarihi,
-    DATEDIFF(DAY, CreatedDate, GETDATE()) AS KacGunOnce,
-    DATEADD(YEAR, 1, CreatedDate) AS BirYilSonra
+    CreatedAt AS KayitTarihi,
+    DATEDIFF(DAY, CreatedAt, GETDATE()) AS KacGunOnce,
+    DATEADD(YEAR, 1, CreatedAt) AS BirYilSonra
 FROM [Identity].[Users]`
             },
             {
@@ -646,7 +646,10 @@ SELECT
 FROM [Music].[Tracks] t
 INNER JOIN [Identity].[Users] u ON t.ArtistID = u.UserID
 LEFT JOIN [Interaction].[Plays] p ON t.TrackID = p.TrackID
-GROUP BY t.Title, u.Username`
+GROUP BY t.Title, u.Username
+GO
+
+PRINT 'VIEW başarıyla oluşturuldu: vw_PopulerSarkilar'`
             },
             {
                 category: 'view',
@@ -689,7 +692,10 @@ SELECT
     Username,
     Email,
     CreatedAt
-FROM [Identity].[Users]`
+FROM [Identity].[Users]
+GO
+
+PRINT 'Şifreli VIEW başarıyla oluşturuldu: vw_KullaniciOzeti'`
             },
             {
                 category: 'view',
@@ -707,7 +713,10 @@ SELECT
     COUNT_BIG(*) AS CalmaSayisi
 FROM [Music].[Tracks] t
 LEFT JOIN [Interaction].[Plays] p ON t.TrackID = p.TrackID
-GROUP BY t.TrackID`
+GROUP BY t.TrackID
+GO
+
+PRINT 'Indexed VIEW başarıyla oluşturuldu: vw_SarkiIstatistikleri'`
             },
 
             // DERS 9: INDEX ve UDF
@@ -802,6 +811,8 @@ CREATE PROCEDURE sp_GetTopTracks
     @TopN INT = 10
 AS
 BEGIN
+    SET NOCOUNT ON;
+    
     SELECT TOP (@TopN)
         t.Title,
         u.Username AS Artist,
@@ -909,20 +920,26 @@ END`
                 code: `BEGIN TRY
     BEGIN TRANSACTION
     
-    -- Hatalı işlem (yabancı anahtar ihlali)
+    DECLARE @UserID INT, @GenreID INT
+    SELECT TOP 1 @UserID = UserID FROM [Identity].[Users]
+    SELECT TOP 1 @GenreID = GenreID FROM [Music].[Genres]
+    
+    -- Şarkı ekle
     INSERT INTO [Music].[Tracks] (Title, Slug, ArtistID, AudioUrl, DurationSeconds, GenreID)
-    VALUES ('Test Song', 'test-error-song', 99999, '/audio/test.mp3', 200, 1)
+    VALUES ('Test Song', 'test-try-catch-' + CAST(NEWID() AS VARCHAR(36)), @UserID, '/audio/test.mp3', 200, @GenreID)
     
     COMMIT TRANSACTION
-    PRINT 'İşlem başarılı'
+    PRINT 'Transaction başarıyla tamamlandı - şarkı eklendi'
 END TRY
 BEGIN CATCH
     IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION
     
+    PRINT '=== HATA YAKALANDI ==='
     PRINT 'HATA: ' + ERROR_MESSAGE()
     PRINT 'Hata Numarası: ' + CAST(ERROR_NUMBER() AS VARCHAR)
     PRINT 'Satır: ' + CAST(ERROR_LINE() AS VARCHAR)
+    PRINT 'Transaction geri alındı'
 END CATCH`
             },
             {
@@ -1069,9 +1086,10 @@ GO
 
 -- Trigger test et - test kullanıcısı oluştur ve silmeye çalış
 DECLARE @TestUserID INT
+DECLARE @RandomNum VARCHAR(10) = CAST(ABS(CHECKSUM(NEWID())) % 100000 AS VARCHAR)
 
 INSERT INTO [Identity].[Users] (Username, Email, PasswordHash, Bio)
-VALUES ('testuser' + CAST(ABS(CHECKSUM(NEWID())) % 10000 AS VARCHAR), 'test@example.com', 'hash123', 'Test kullanıcı')
+VALUES ('testuser' + @RandomNum, 'test' + @RandomNum + '@example.com', 'hash123', 'Test kullanıcı')
 
 SET @TestUserID = SCOPE_IDENTITY()
 

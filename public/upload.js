@@ -169,7 +169,12 @@ async function handleSubmit(e) {
             if (e.lengthComputable) {
                 const percentComplete = (e.loaded / e.total) * 100;
                 progressFill.style.width = percentComplete + '%';
-                progressText.textContent = `Yükleniyor... ${Math.round(percentComplete)}%`;
+                
+                if (percentComplete < 100) {
+                    progressText.textContent = `Yükleniyor... ${Math.round(percentComplete)}%`;
+                } else {
+                    progressText.textContent = 'İşleniyor... Lütfen bekleyin';
+                }
             }
         });
 
@@ -178,12 +183,14 @@ async function handleSubmit(e) {
             if (xhr.status === 200) {
                 const response = JSON.parse(xhr.responseText);
                 progressText.textContent = 'Yükleme tamamlandı! ✓';
+                progressFill.style.width = '100%';
                 
                 setTimeout(() => {
                     window.location.href = `/track-detail.html?slug=${response.slug}`;
                 }, 1500);
             } else {
-                throw new Error(xhr.responseText);
+                const errorMsg = xhr.responseText ? JSON.parse(xhr.responseText).message : 'Bilinmeyen hata';
+                throw new Error(errorMsg);
             }
         });
 
