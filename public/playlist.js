@@ -201,6 +201,7 @@ async function loadPlaylistData() {
             if (playlist) {
                 document.getElementById('playlistPageTitle').textContent = playlist.Name;
                 document.getElementById('playlistPageDescription').textContent = playlist.Description || '';
+                document.getElementById('playlistPageOwner').textContent = playlist.OwnerUsername || 'Kullanıcı';
                 document.getElementById('playlistPageTrackCount').textContent = `${playlist.TrackCount} şarkı`;
                 
                 // Update cover image
