@@ -1,0 +1,62 @@
+[
+  {
+    "PlaylistID": 4,
+    "UserID": 3009,
+    "Name": "yenideneme",
+    "Description": null,
+    "CoverImageUrl": null,
+    "IsPublic": true,
+    "CreatedDate": "2025-11-22T21:24:02.450Z",
+    "UpdatedDate": "2025-11-22T21:24:02.510Z"
+  },
+  {
+    "PlaylistID": 5,
+    "UserID": 3009,
+    "Name": "yeni",
+    "Description": null,
+    "CoverImageUrl": null,
+    "IsPublic": true,
+    "CreatedDate": "2025-11-22T21:31:41.450Z",
+    "UpdatedDate": "2025-11-22T21:48:07.273Z"
+  },
+  {
+    "PlaylistID": 6,
+    "UserID": 3009,
+    "Name": "yeni2",
+    "Description": null,
+    "CoverImageUrl": null,
+    "IsPublic": true,
+    "CreatedDate": "2025-11-22T21:32:15.160Z",
+    "UpdatedDate": "2025-11-22T21:32:15.186Z"
+  },
+  {
+    "PlaylistID": 7,
+    "UserID": 3008,
+    "Name": "deneme",
+    "Description": null,
+    "CoverImageUrl": null,
+    "IsPublic": true,
+    "CreatedDate": "2025-11-23T14:37:15.436Z",
+    "UpdatedDate": "2025-11-24T19:38:06.740Z"
+  },
+  {
+    "PlaylistID": 1002,
+    "UserID": 3009,
+    "Name": "yeni liste",
+    "Description": null,
+    "CoverImageUrl": null,
+    "IsPublic": true,
+    "CreatedDate": "2025-11-29T20:36:31.796Z",
+    "UpdatedDate": "2025-11-29T20:36:31.846Z"
+  },
+  {
+    "PlaylistID": 2002,
+    "UserID": 3023,
+    "Name": "Favoriler",
+    "Description": null,
+    "CoverImageUrl": null,
+    "IsPublic": true,
+    "CreatedDate": "2025-12-05T22:35:13.246Z",
+    "UpdatedDate": "2025-12-05T22:55:31.530Z"
+  }
+]

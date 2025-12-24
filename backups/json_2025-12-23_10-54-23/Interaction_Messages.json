@@ -1,0 +1,245 @@
+[
+  {
+    "MessageID": 1,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "merhaba",
+    "SentDate": "2025-11-22T17:07:37.553Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 2,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "merhaba",
+    "SentDate": "2025-11-22T17:08:09.920Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 3,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "naber nasılsın burnun kapıya kısılsın",
+    "SentDate": "2025-11-24T18:27:25.033Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1002,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "🎵 ey aşk - araf\nhttp://localhost:3000/track-detail.html?id=50010",
+    "SentDate": "2025-11-28T14:20:02.760Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1003,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-28T15:07:33.473Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1004,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-28T15:11:33.413Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1005,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-28T15:13:08.180Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1006,
+    "SenderID": 3008,
+    "ReceiverID": 3009,
+    "MessageText": "🎵 Wake Up Little Susie - ReaganMacGyver",
+    "SentDate": "2025-11-28T15:15:54.970Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1007,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 maya - erdem",
+    "SentDate": "2025-11-29T20:34:30.900Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1008,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - undefined",
+    "SentDate": "2025-11-29T20:41:20.303Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1009,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - undefined",
+    "SentDate": "2025-11-29T21:06:17.757Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 1010,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - undefined",
+    "SentDate": "2025-11-29T21:16:45.453Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1011,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:18:58.700Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1012,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:20:18.557Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1013,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:21:52.143Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1014,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:22:11.347Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1015,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:23:43.350Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1016,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:25:03.260Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1017,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:25:26.497Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1018,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 Lost Nights - Idella Vibes",
+    "SentDate": "2025-11-29T21:26:47.823Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":29207,\"title\":\"Lost Nights\",\"artist\":\"Idella Vibes\",\"coverImage\":\"/covers/huGK02giYsfUUET.jpg\",\"duration\":344,\"url\":\"http://localhost:3000/track-detail.html?id=29207\"}"
+  },
+  {
+    "MessageID": 1019,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 semicenk gözler - araf",
+    "SentDate": "2025-11-29T21:31:52.000Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":50011,\"title\":\"semicenk gözler\",\"artist\":\"araf\",\"duration\":178,\"url\":\"http://localhost:3000/track-detail.html?id=50011\"}"
+  },
+  {
+    "MessageID": 1020,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "🎵 semicenk gözler - araf",
+    "SentDate": "2025-11-29T21:33:12.223Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":50011,\"title\":\"semicenk gözler\",\"artist\":\"araf\",\"duration\":178,\"url\":\"http://localhost:3000/track-detail.html?id=50011\"}"
+  },
+  {
+    "MessageID": 1021,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": " ",
+    "SentDate": "2025-11-29T21:34:12.730Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":50011,\"title\":\"semicenk gözler\",\"artist\":\"araf\",\"duration\":178,\"url\":\"http://localhost:3000/track-detail.html?id=50011\"}"
+  },
+  {
+    "MessageID": 1022,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": " ",
+    "SentDate": "2025-11-29T21:34:31.603Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":48684,\"title\":\"Flying Beats\",\"artist\":\"TrevionKunze70\",\"duration\":242,\"url\":\"http://localhost:3000/track-detail.html?id=48684\"}"
+  },
+  {
+    "MessageID": 1023,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": " ",
+    "SentDate": "2025-11-29T21:34:38.160Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":14154,\"title\":\"Falling Dreams\",\"artist\":\"Lord ecstatic\",\"duration\":170,\"url\":\"http://localhost:3000/track-detail.html?id=14154\"}"
+  },
+  {
+    "MessageID": 1024,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": "a",
+    "SentDate": "2025-11-29T21:50:41.213Z",
+    "IsRead": false,
+    "Metadata": null
+  },
+  {
+    "MessageID": 2010,
+    "SenderID": 3009,
+    "ReceiverID": 3008,
+    "MessageText": " ",
+    "SentDate": "2025-12-03T21:25:55.837Z",
+    "IsRead": false,
+    "Metadata": "{\"type\":\"track_share\",\"trackId\":50012,\"title\":\"maya\",\"artist\":\"erdem\",\"duration\":282,\"url\":\"http://localhost:3000/track-detail.html?id=50012\"}"
+  }
+]

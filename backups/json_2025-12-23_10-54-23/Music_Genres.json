@@ -1,0 +1,214 @@
+[
+  {
+    "GenreID": 62,
+    "Name": "Ambient"
+  },
+  {
+    "GenreID": 82,
+    "Name": "Blues 25"
+  },
+  {
+    "GenreID": 91,
+    "Name": "Blues 34"
+  },
+  {
+    "GenreID": 94,
+    "Name": "Blues 37"
+  },
+  {
+    "GenreID": 67,
+    "Name": "Chillwave"
+  },
+  {
+    "GenreID": 96,
+    "Name": "Classical 39"
+  },
+  {
+    "GenreID": 93,
+    "Name": "Country 36"
+  },
+  {
+    "GenreID": 70,
+    "Name": "Deep House"
+  },
+  {
+    "GenreID": 65,
+    "Name": "Drum & Bass"
+  },
+  {
+    "GenreID": 64,
+    "Name": "Dubstep"
+  },
+  {
+    "GenreID": 72,
+    "Name": "Electro"
+  },
+  {
+    "GenreID": 61,
+    "Name": "Electronic"
+  },
+  {
+    "GenreID": 90,
+    "Name": "Electronic 33"
+  },
+  {
+    "GenreID": 103,
+    "Name": "Electronic 46"
+  },
+  {
+    "GenreID": 104,
+    "Name": "Electronic 47"
+  },
+  {
+    "GenreID": 99,
+    "Name": "Funk 42"
+  },
+  {
+    "GenreID": 106,
+    "Name": "Funk 49"
+  },
+  {
+    "GenreID": 69,
+    "Name": "Future Bass"
+  },
+  {
+    "GenreID": 73,
+    "Name": "Hardstyle"
+  },
+  {
+    "GenreID": 78,
+    "Name": "Hip Hop 21"
+  },
+  {
+    "GenreID": 100,
+    "Name": "Hip Hop 43"
+  },
+  {
+    "GenreID": 60,
+    "Name": "Hip-Hop"
+  },
+  {
+    "GenreID": 59,
+    "Name": "House"
+  },
+  {
+    "GenreID": 97,
+    "Name": "Latin 40"
+  },
+  {
+    "GenreID": 105,
+    "Name": "Latin 48"
+  },
+  {
+    "GenreID": 58,
+    "Name": "Lo-Fi"
+  },
+  {
+    "GenreID": 74,
+    "Name": "Melodic Techno"
+  },
+  {
+    "GenreID": 75,
+    "Name": "Minimal"
+  },
+  {
+    "GenreID": 81,
+    "Name": "Non Music 24"
+  },
+  {
+    "GenreID": 98,
+    "Name": "Non Music 41"
+  },
+  {
+    "GenreID": 109,
+    "Name": "Other"
+  },
+  {
+    "GenreID": 108,
+    "Name": "Pop"
+  },
+  {
+    "GenreID": 87,
+    "Name": "Pop 30"
+  },
+  {
+    "GenreID": 101,
+    "Name": "Pop 44"
+  },
+  {
+    "GenreID": 71,
+    "Name": "Progressive House"
+  },
+  {
+    "GenreID": 107,
+    "Name": "R&B"
+  },
+  {
+    "GenreID": 95,
+    "Name": "Rap 38"
+  },
+  {
+    "GenreID": 79,
+    "Name": "Rock 22"
+  },
+  {
+    "GenreID": 85,
+    "Name": "Rock 28"
+  },
+  {
+    "GenreID": 92,
+    "Name": "Rock 35"
+  },
+  {
+    "GenreID": 102,
+    "Name": "Rock 45"
+  },
+  {
+    "GenreID": 84,
+    "Name": "Soul 27"
+  },
+  {
+    "GenreID": 86,
+    "Name": "Soul 29"
+  },
+  {
+    "GenreID": 88,
+    "Name": "Soul 31"
+  },
+  {
+    "GenreID": 80,
+    "Name": "Stage And Screen 23"
+  },
+  {
+    "GenreID": 83,
+    "Name": "Stage And Screen 26"
+  },
+  {
+    "GenreID": 63,
+    "Name": "Techno"
+  },
+  {
+    "GenreID": 66,
+    "Name": "Trance"
+  },
+  {
+    "GenreID": 57,
+    "Name": "Trap"
+  },
+  {
+    "GenreID": 76,
+    "Name": "UK Garage"
+  },
+  {
+    "GenreID": 68,
+    "Name": "Vaporwave"
+  },
+  {
+    "GenreID": 77,
+    "Name": "World 20"
+  },
+  {
+    "GenreID": 89,
+    "Name": "World 32"
+  }
+]
