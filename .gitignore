@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+database/seeder/node_modules/
+
+# Environment files (contains passwords)
+.env
+
+# Backups (too large for git)
+backups/*.bak
+backups/*.trn
+backups/json_*/
+backups/stored_procedures_*/
+backups/uploads_*/
+
+# Uploaded user content (audio/images)
+public/uploads/audio/*
+public/uploads/covers/*
+!public/uploads/audio/.gitkeep
+!public/uploads/covers/.gitkeep
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*

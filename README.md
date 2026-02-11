@@ -1,45 +1,56 @@
-# SoundCloud Clone - REST API
+# 🎵 Frekans - Müzik Streaming Platformu
 
-Node.js + Express backend servisi. SQL Server veritabanı ile entegre.
+Node.js + Express + MSSQL backend, vanilla JS frontend.
 
-## 🚀 Kurulum
+## 🚀 Format Sonrası Hızlı Kurulum
 
-1. **Bağımlılıkları yükle:**
 ```bash
+# 1. Repo'yu klonla
+git clone https://github.com/KULLANICI_ADIN/frekans.git
+cd frekans
+
+# 2. Bağımlılıkları yükle
 npm install
-```
 
-2. **Ortam değişkenlerini ayarla:**
-```bash
-# .env.example dosyasını .env olarak kopyala
+# 3. .env dosyasını oluştur ve SQL Server bilgilerini gir
 copy .env.example .env
+# .env dosyasını aç ve DB_SERVER satırını kendi sunucuna göre düzenle
 
-# .env dosyasını düzenle (SQL Server bilgilerini gir)
-```
+# 4. Veritabanını otomatik kur (tablo + veri + SP + trigger HEPSİ)
+npm run setup
 
-3. **Veritabanını hazırla:**
-```bash
-# database/ klasöründeki SQL dosyalarını sırayla çalıştır:
-# 01_CreateDatabase.sql
-# 02_CreateSchemas.sql
-# 03_CreateTables_Identity.sql
-# 04_CreateTables_Music.sql
-# 05_CreateTables_Interaction.sql
-# 06_SampleData_Insert.sql
-# 08_Performance_Optimization.sql
-# 09_StoredProcedures.sql
-
-# Seed ile 50K+ veri yükle
+# 5. (Opsiyonel) 50K+ test verisi yükle
 cd database/seeder
 npm install
 npm run seed
+cd ../..
+
+# 6. Sunucuyu başlat
+npm start
 ```
 
-4. **Sunucuyu başlat:**
-```bash
-npm start
-# veya geliştirme için:
-npm run dev
+**Tek komutla veritabanı kurulumu yapılır:** `npm run setup`
+- FrekansDB veritabanını oluşturur
+- 6 şema (Identity, Music, Interaction, Feedback, Analysis, Audit)
+- Tüm tabloları, indeksleri, view'ları oluşturur
+- Stored procedure'leri ve trigger'ları kurar
+- Örnek verileri ekler
+- `nodeapp` SQL kullanıcısını oluşturur ve yetkilendirir
+
+### .env Ayarları
+
+```env
+# Named instance (SSMS'deki sunucu adını aynen yaz)
+DB_SERVER=(local)\MSSQLSERVER_2025
+
+# Varsayılan instance (port ile)
+DB_SERVER=localhost
+DB_PORT=1433
+
+# Windows Auth = DB_USER satırını yorum yapılı bırak
+# SQL Auth = DB_USER ve DB_PASSWORD'u aç
+# DB_USER=sa
+# DB_PASSWORD=SifrenBuraya
 ```
 
 ## 📡 API Endpoints

@@ -1,0 +1,402 @@
+================================================================================
+                    FREKANS PROJESI - VERİTABANI RAPORU
+                    SoundCloud Clone Müzik Platformu
+================================================================================
+
+1. VERİTABANI YAPISININ TASARIMI
+
+Projemizde Microsoft SQL Server kullanarak 3 ana şemadan oluşan bir veritabanı 
+mimarisi tasarladık. Mantıksal ayrım için şema-bazlı yapı tercih ettik.
+
+1.1. ŞEMALAR VE TABLOLAR
+
+a) Identity Şeması (Kullanıcı Yönetimi):
+   - Users Tablosu: Kullanıcı bilgilerini tutar
+     * Primary Key: UserID (INT IDENTITY)
+     * Unique Constraints: Username, Email
+     * Check Constraint: Email formatı kontrolü (LIKE '%@%.%')
+     * Kolonlar: Username, Email, PasswordHash, Bio, AvatarUrl, IsVerified,
+       FollowerCount, FollowingCount, CreatedAt
+
+b) Music Şeması (Müzik İçerikleri):
+   - Genres: Müzik türleri (Trap, Lo-Fi, House vb.)
+     * Primary Key: GenreID (INT IDENTITY)
+   
+   - Albums: Albüm/EP koleksiyonları
+     * Primary Key: AlbumID (INT IDENTITY)
+     * Foreign Key: ArtistID → Users(UserID) ON DELETE CASCADE
+   
+   - Tracks: Şarkı detayları ve metadata
+     * Primary Key: TrackID (INT IDENTITY)
+     * Foreign Keys: 
+       - ArtistID → Users(UserID) ON DELETE NO ACTION
+       - AlbumID → Albums(AlbumID) ON DELETE SET NULL
+       - GenreID → Genres(GenreID) ON DELETE NO ACTION
+     * Unique Constraint: Slug (URL-friendly isim)
+     * Check Constraints: DurationSeconds > 0, PlayCount >= 0
+     * Önemli Kolonlar: Title, AudioUrl, DurationSeconds, WaveformData (JSON),
+       PlayCount (cache), IsPublic
+
+c) Interaction Şeması (Kullanıcı Etkileşimleri):
+   - Plays: Dinleme kayıtları (Analytics için)
+     * Primary Key: PlayID (BIGINT - milyonlarca kayıt için)
+     * Foreign Keys: TrackID, UserID (NULL olabilir - misafir dinleme)
+   
+   - Likes: Beğeni sistemi
+     * Primary Key: LikeID (INT IDENTITY)
+     * Unique Constraint: (UserID, TrackID) - Çift beğeni önleme
+   
+   - Comments: Zaman damgalı yorumlar (SoundCloud özelliği)
+     * Primary Key: CommentID (INT IDENTITY)
+     * TimestampSeconds: Şarkının kaçıncı saniyesine yorum yapıldığı
+   
+   - Follows: Takip sistemi
+     * Composite Primary Key: (FollowerID, FollowingID)
+     * Check Constraint: FollowerID != FollowingID (kendini takip önleme)
+     * Foreign Keys: Her iki kolon da Users(UserID)'ye referans
+
+1.2. İNDEKSLEME STRATEJİSİ
+
+50.000+ kayıt için performans optimizasyonu yaptık:
+- IX_Tracks_Title: Şarkı aramaları için
+- IX_Tracks_GenreID (INCLUDE): Tür bazlı filtreleme
+- IX_Tracks_ArtistID (Filtered Index WHERE IsPublic=1): Profil sayfaları
+- IX_Plays_TrackID_PlayedAt: Dinlenme geçmişi
+- IX_Likes_UserID_LikedAt: Beğenilen şarkılar
+
+1.3. TABLO İLİŞKİLERİ ÖRNEKLERİ
+
+Projemizde farklı türde tablo ilişkileri kullandık:
+
+Örnek 1: ONE-TO-MANY İLİŞKİ (Bir Sanatçı - Çok Şarkı)
+---------------------------------------------------------
+Users (1) ----< Tracks (N)
+
+Açıklama: Bir sanatçı birden fazla şarkı yükleyebilir ama her şarkının tek 
+bir sanatçısı vardır.
+
+SQL Tanımı:
+```sql
+CREATE TABLE [Music].[Tracks] (
+    TrackID INT PRIMARY KEY,
+    ArtistID INT NOT NULL,
+    Title NVARCHAR(200),
+    
+    CONSTRAINT FK_Tracks_Artist FOREIGN KEY (ArtistID)
+        REFERENCES [Identity].[Users](UserID)
+        ON DELETE NO ACTION
+);
+```
+
+Cascade Kuralı: ON DELETE NO ACTION
+Neden: Sanatçı silinmek istendiğinde, eğer şarkıları varsa silme işlemi 
+engellenir. Bu sayede yanlışlıkla önemli içerik kaybı önlenir.
+
+Örnek Sorgu:
+```sql
+-- Bir sanatçının tüm şarkılarını getir
+SELECT u.Username, t.Title, t.PlayCount
+FROM [Identity].[Users] u
+INNER JOIN [Music].[Tracks] t ON u.UserID = t.ArtistID
+WHERE u.UserID = 5
+ORDER BY t.PlayCount DESC;
+```
+
+Örnek 2: MANY-TO-MANY İLİŞKİ (Kullanıcılar Arası Takip)
+----------------------------------------------------------
+Users (N) ----< Follows >---- (N) Users
+
+Açıklama: Bir kullanıcı birçok kişiyi takip edebilir ve aynı zamanda birçok 
+kişi tarafından takip edilebilir. Bu çoka-çok ilişki için ara tablo (junction 
+table) kullandık.
+
+SQL Tanımı:
+```sql
+CREATE TABLE [Interaction].[Follows] (
+    FollowerID INT NOT NULL,    -- Takip eden
+    FollowingID INT NOT NULL,   -- Takip edilen
+    FollowDate DATETIME2(7) DEFAULT GETDATE(),
+    
+    CONSTRAINT PK_Follows PRIMARY KEY (FollowerID, FollowingID),
+    
+    CONSTRAINT FK_Follows_Follower FOREIGN KEY (FollowerID)
+        REFERENCES [Identity].[Users](UserID),
+    
+    CONSTRAINT FK_Follows_Following FOREIGN KEY (FollowingID)
+        REFERENCES [Identity].[Users](UserID),
+    
+    CONSTRAINT CK_Follows_NoSelfFollow CHECK (FollowerID != FollowingID)
+);
+```
+
+Özel Özellikler:
+- Composite Primary Key (FollowerID, FollowingID)
+- Check Constraint ile kullanıcının kendini takip etmesi engellendi
+- Aynı takip ilişkisi iki kez eklenemez (PK sayesinde)
+
+Örnek Sorgu:
+```sql
+-- UserID=10'un takipçilerini listele
+SELECT u.Username, u.FollowerCount, f.FollowDate
+FROM [Interaction].[Follows] f
+INNER JOIN [Identity].[Users] u ON f.FollowerID = u.UserID
+WHERE f.FollowingID = 10
+ORDER BY f.FollowDate DESC;
+```
+
+Örnek 3: ONE-TO-MANY (NULLABLE) İLİŞKİ (Şarkı - Albüm)
+--------------------------------------------------------
+Albums (1) ----< Tracks (N, optional)
+
+Açıklama: Bir şarkı bir albüme ait olabilir veya single olarak yayınlanabilir 
+(AlbumID NULL). Bir albümde ise birçok şarkı bulunabilir.
+
+SQL Tanımı:
+```sql
+CREATE TABLE [Music].[Tracks] (
+    TrackID INT PRIMARY KEY,
+    AlbumID INT NULL,    -- NULL olabilir (Single şarkılar için)
+    Title NVARCHAR(200),
+    
+    CONSTRAINT FK_Tracks_Album FOREIGN KEY (AlbumID)
+        REFERENCES [Music].[Albums](AlbumID)
+        ON DELETE SET NULL
+);
+```
+
+Cascade Kuralı: ON DELETE SET NULL
+Neden: Albüm silinirse şarkılar kaybolmaz, sadece albüm ilişkisi kesilir 
+(AlbumID NULL yapılır). Şarkı artık "Single" kategorisine geçer.
+
+Örnek Senaryo:
+```sql
+-- Bir albüm siliniyor
+DELETE FROM [Music].[Albums] WHERE AlbumID = 3;
+
+-- Sonuç: Albümdeki şarkılar silinmez, AlbumID'leri NULL olur
+-- Tracks: Title="Summer Hit", AlbumID=NULL (önceden 3'tü)
+```
+
+Örnek Sorgu:
+```sql
+-- Albümsüz şarkıları listele (Single'lar)
+SELECT t.Title, u.Username AS Artist, t.PlayCount
+FROM [Music].[Tracks] t
+INNER JOIN [Identity].[Users] u ON t.ArtistID = u.UserID
+WHERE t.AlbumID IS NULL
+ORDER BY t.PlayCount DESC;
+```
+
+İlişki Türlerinin Karşılaştırması:
+┌─────────────────┬──────────────┬─────────────────┬─────────────────┐
+│ İlişki Tipi     │ Örnek        │ Cascade Kuralı  │ Amacı           │
+├─────────────────┼──────────────┼─────────────────┼─────────────────┤
+│ 1:N (Zorunlu)   │ User→Tracks  │ NO ACTION       │ Veri koruması   │
+│ N:M (Ara Tablo) │ User↔User    │ CASCADE         │ Esnek ilişki    │
+│ 1:N (Opsiyonel) │ Album→Tracks │ SET NULL        │ Bağımsızlık     │
+└─────────────────┴──────────────┴─────────────────┴─────────────────┘
+
+================================================================================
+
+2. KULLANILAN SQL İŞLEMLERİ
+
+2.1. STORED PROCEDURE'LER
+
+a) [Music].[sp_UploadTrack]
+   Amaç: Yeni şarkı yükleme işlemi
+   Özellikler:
+   - Transaction kullanımı (BEGIN TRAN / COMMIT / ROLLBACK)
+   - Otomatik slug oluşturma (Türkçe karakter dönüşümü)
+   - Slug çakışması kontrolü (counter ile -2, -3 ekleme)
+   - TRY-CATCH ile hata yönetimi
+   - SCOPE_IDENTITY() ile yeni TrackID döndürme
+
+b) [Interaction].[sp_ToggleLike]
+   Amaç: Beğeni durumunu toggle etme (Like/Unlike)
+   Mantık:
+   - EXISTS kontrolü ile kullanıcı beğenmiş mi kontrol
+   - Beğendiyse DELETE (UNLIKE), beğenmediyse INSERT (LIKE)
+   - Güncel beğeni sayısını SELECT COUNT ile hesaplama
+   - Frontend için JSON benzeri sonuç döndürme
+
+c) [Analysis].[sp_CalculateArtistTrendScore]
+   Amaç: CURSOR kullanarak sanatçı trend analizi
+   Algoritma:
+   - TrendScore = (TotalPlays × 1) + (TotalLikes × 5)
+   - CURSOR ile tüm sanatçıları döngüde işleme
+   - Geçici tablo (#TrendResults) ile sonuç biriktirme
+   - TOP 20 trend sanatçı raporlama
+   Cursor Adımları:
+   1. DECLARE cursor_name CURSOR FOR SELECT...
+   2. OPEN cursor
+   3. FETCH NEXT INTO değişkenler
+   4. WHILE @@FETCH_STATUS = 0 döngüsü
+   5. CLOSE ve DEALLOCATE cursor
+
+2.2. TRIGGER'LAR (Otomatik İşlemler)
+
+a) trg_UpdatePlayCount (AFTER INSERT on Plays)
+   - Her dinleme kaydında Tracks.PlayCount'u otomatik artırır
+   - UPDATE ... WHERE TrackID IN (SELECT TrackID FROM inserted)
+
+b) trg_UpdateFollowerCount_Insert/Delete (AFTER INSERT/DELETE on Follows)
+   - Takip olduğunda FollowerCount ve FollowingCount günceller
+   - İki kullanıcının da sayacını aynı anda günceller
+
+c) trg_PreventCommentSpam (INSTEAD OF INSERT on Comments)
+   - Son 5 saniye içinde aynı şarkıya tekrar yorum engeller
+   - DATEADD(SECOND, -5, GETDATE()) ile zaman kontrolü
+   - Spam tespit edilirse THROW ile hata fırlatır
+   - Normal yorumları INSERT INTO ... SELECT FROM inserted ile ekler
+
+d) trg_AuditUserProfileChanges (AFTER UPDATE on Users)
+   - Profil değişikliklerini Audit.UserProfileChanges tablosuna loglar
+   - inserted ve deleted tablolarını karşılaştırır
+   - Username, Email, Bio, AvatarUrl değişikliklerini ayrı ayrı kaydeder
+
+e) trg_PreventPopularTrackDeletion (INSTEAD OF DELETE on Tracks)
+   - 100+ dinlenme veya 10+ beğeni alan şarkıları korur
+   - RAISERROR ile silme işlemini engeller
+   - Popüler değilse normal DELETE yapar
+
+2.3. VIEW'LAR (Görünümler)
+
+a) vw_TrackCardDetails
+   - Karmaşık JOIN'leri basitleştirir (Tracks + Users + Genres + Albums)
+   - Subquery ile TotalPlays, TotalLikes, TotalComments hesaplar
+   - Frontend için tek SELECT ile tüm şarkı kartı verisini döner
+
+b) vw_TopCharts
+   - En çok dinlenen şarkıları TOP 50 olarak listeler
+   - ORDER BY PlayCount DESC ile sıralama
+
+2.4. KULLANILAN SORGULAR
+
+- JOIN İşlemleri: INNER JOIN, LEFT JOIN ile tablolar arası ilişki
+- Aggregate Functions: COUNT(), SUM(), AVG(), MAX()
+- Window Functions: ROW_NUMBER() OVER (ORDER BY TrendScore DESC)
+- Subquery: SELECT içinde SELECT (TotalPlays hesaplama)
+- CTE (Common Table Expressions): WITH cte_name AS (...)
+- Pagination: OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY
+
+================================================================================
+
+3. KARŞILAŞILAN TEKNİK PROBLEM VE ÇÖZÜMÜ
+
+3.1. PROBLEM: FOLLOWERCOUNT/FOLLOWINGCOUNT SENKRONİZASYON HATASI
+
+Proje geliştirme sürecinde kritik bir veri tutarlılığı problemiyle 
+karşılaştık. Durum şöyleydi:
+
+a) Problemin Nedeni:
+   - Başlangıçta Users tablosunda FollowerCount ve FollowingCount kolonları yoktu
+   - Sonradan bu kolonları ekledik (ALTER TABLE ile)
+   - Trigger'ları yazdık (trg_UpdateFollowerCount_Insert/Delete)
+   - Ancak mevcut Follows tablosundaki veriler için sayaçlar 0 olarak kaldı
+   - Yeni takip işlemlerinde trigger çalışıyordu ama eski veriler güncel değildi
+
+b) Sorunun Tespiti:
+   - Test sırasında bazı kullanıcıların FollowerCount=0 ama Follows tablosunda
+     kayıtları olduğunu fark ettik
+   - SELECT ile kontrol ettiğimizde:
+     * Follows tablosunda 150+ takip ilişkisi vardı
+     * Ama Users.FollowerCount kolonları hep 0 gösteriyordu
+   - Trigger'lar sadece YENİ kayıtlar için çalışıyordu (AFTER INSERT)
+
+3.2. ÇÖZÜM YÖNTEMİ
+
+İki adımlı bir çözüm uyguladık:
+
+Adım 1: SQL Script ile Toplu Güncelleme (14_Triggers.sql içinde)
+```sql
+UPDATE u
+SET 
+    FollowerCount = (SELECT COUNT(*) FROM Interaction.Follows 
+                     WHERE FollowingID = u.UserID),
+    FollowingCount = (SELECT COUNT(*) FROM Interaction.Follows 
+                      WHERE FollowerID = u.UserID)
+FROM Identity.Users u;
+```
+Bu sorgu, her kullanıcı için Follows tablosundan gerçek sayıları hesaplayıp 
+Users tablosuna yazdı.
+
+Adım 2: Node.js Script ile Doğrulama (fix-follower-counts.js)
+Veri tutarlılığını garantilemek için ayrı bir utility script yazdık:
+```javascript
+await pool.request().query(`
+    UPDATE [Identity].[Users]
+    SET 
+        FollowerCount = (SELECT COUNT(*) FROM [Interaction].[Follows] 
+                         WHERE FollowingID = [Identity].[Users].UserID),
+        FollowingCount = (SELECT COUNT(*) FROM [Interaction].[Follows] 
+                          WHERE FollowerID = [Identity].[Users].UserID)
+`);
+```
+Bu script'i:
+- Migration'lardan sonra çalıştırıyoruz
+- Veri taşıma işlemlerinde kullanıyoruz
+- Backup restore sonrası doğrulama için kullanıyoruz
+
+3.3. ÖĞRENİLEN DERSLER
+
+1. Denormalizasyon Riski: FollowerCount gibi hesaplanabilir verileri cache 
+   olarak tutmak performans kazandırır ama tutarlılık riskleri getirir.
+
+2. Trigger Sınırlamaları: Trigger'lar sadece YENİ veri değişikliklerinde 
+   çalışır. Mevcut verileri etkilemez.
+
+3. Migration Stratejisi: Yeni kolon eklendiğinde:
+   - Önce kolonu ekle (DEFAULT değerle)
+   - Mevcut verileri güncelle (UPDATE script)
+   - Trigger'ları ekle
+   - Test et ve doğrula
+
+4. Veri Tutarlılığı İzleme: Periyodik olarak çalışacak validation script'leri
+   yazmak önemli:
+   ```sql
+   -- Tutarsızlık kontrolü
+   SELECT UserID, Username, FollowerCount,
+          (SELECT COUNT(*) FROM Follows WHERE FollowingID = UserID) AS ActualCount
+   FROM Users
+   WHERE FollowerCount != (SELECT COUNT(*) FROM Follows 
+                           WHERE FollowingID = UserID)
+   ```
+
+Bu deneyim bize veritabanı tasarımında veri tutarlılığının (data consistency) 
+ne kadar kritik olduğunu gösterdi. Özellikle cache kolonları kullanırken 
+(PlayCount, FollowerCount gibi) hem trigger hem de periyodik senkronizasyon 
+mekanizmalarına ihtiyaç duyulduğunu öğrendik.
+
+================================================================================
+
+4. PROJE İSTATİSTİKLERİ
+
+- Toplam Tablo: 10 (3 şema altında)
+- Stored Procedure: 15+ (Upload, Toggle, Analytics, Playlist yönetimi)
+- Trigger: 6 (PlayCount, FollowerCount, Spam, Audit, Koruma)
+- View: 2 (TrackCardDetails, TopCharts)
+- Index: 12+ (Performance optimizasyonu)
+- Foreign Key İlişkisi: 8
+- Check Constraint: 5
+- Unique Constraint: 4
+
+Test Verisi:
+- 50+ Kullanıcı
+- 50.000+ Şarkı (Seeder ile)
+- 100.000+ Dinleme kaydı
+- 10.000+ Beğeni
+- 5.000+ Yorum
+
+Backup Stratejisi:
+- Full Backup: Haftalık
+- Differential Backup: Günlük
+- Transaction Log Backup: Saatlik
+- JSON Export: Kritik tablolar için
+
+================================================================================
+
+Sonuç olarak, projemizde modern bir müzik platformu için ölçeklenebilir ve 
+performanslı bir veritabanı mimarisi oluşturduk. Schema-based tasarım, 
+kapsamlı trigger'lar ve stored procedure'ler ile hem veri bütünlüğünü hem de 
+performansı sağladık. Karşılaştığımız senkronizasyon problemini sistematik bir 
+yaklaşımla çözdük ve bu deneyimden önemli dersler çıkardık.

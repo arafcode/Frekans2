@@ -78,7 +78,7 @@ const upload = multer({
 // SQL Server Configuration
 // =============================================
 const dbConfig = {
-    server: 'localhost',
+    server: 'localhost', 
     port: 52548,
     database: process.env.DB_DATABASE || 'FrekansDB',
     user: 'nodeapp',
@@ -106,7 +106,7 @@ let pool;
 // =============================================
 async function connectDatabase() {
     try {
-        pool = await sql.connect(dbConfig);
+        pool = await sql.connect(dbConfig);  // mssql server kütüp
         console.log('✅ SQL Server bağlantısı başarılı!');
         console.log(`📊 Veritabanı: ${dbConfig.database}`);
         return pool;
@@ -119,10 +119,7 @@ async function connectDatabase() {
 // =============================================
 // ENDPOINT 1: GET /api/tracks
 // =============================================
-// Amaç: Şarkı listesini View'dan çek (Sayfalama ile)
-// Query Params: ?page=1&limit=20&genre=Trap
-// =============================================
-// Search tracks endpoint
+
 app.get('/api/tracks/search', async (req, res) => {
     try {
         const query = req.query.q || '';
